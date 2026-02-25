@@ -3,21 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>誘惑と鉄鎖 - Ver.31</title>
+    <title>誘惑と鉄鎖 - Ver.33</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+
     <style>
         :root { --bg-color:#050505; --card-bg:rgba(20,20,20,0.95); --neon-red:#ff1a1a; --accent-red:#8e0000; --accent-blue:#45aaf2; --accent-gold:#f1c40f; --accent-purple:#a55eea; --accent-orange:#e67e22; --text-color:#e0e0e0; }
         * { touch-action:manipulation; box-sizing:border-box; outline:none; }
-        body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:radial-gradient(circle at center, #1a0505 0%, #050505 100%); font-family:'Noto Sans JP', sans-serif; color:var(--text-color); transition: background 1.5s ease; }
-        body.citizen-win-bg { background: radial-gradient(circle at center, #0a1f3d 0%, #050505 100%); }
-        .viewport { width:100%; height:100dvh; display:flex; justify-content:center; align-items:center; position:relative; overflow:hidden; }
-        .screen { position:absolute; width:94%; max-width:440px; opacity:0; visibility:hidden; transform:translateY(15px); transition:0.3s ease; text-align:center; z-index:1; overflow-y: auto; max-height: 98dvh; padding: 10px; }
-        .screen.active { opacity:1; visibility:visible; transform:translateY(0); z-index:10; }
-        
+
         h1 { font-family:'Cinzel', serif; font-size:1.6rem; letter-spacing:4px; color:var(--neon-red); text-shadow:0 0 15px rgba(255, 26, 26, 0.6); margin: 0 0 10px; }
         .card { background:var(--card-bg); border:1px solid #301010; border-radius:20px; padding:15px; box-shadow: 0 0 30px rgba(0,0,0,1); position:relative; }
-
+body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; 
+            /* 背景のベースを黒にしつつ、中央に赤みを残す */
+            background: radial-gradient(circle at center, #1a0505 0%, #000000 100%); 
+            font-family: 'Noto Sans JP', sans-serif; 
+            color: var(--text-color); 
+            transition: background 1.5s ease; 
+        }
+        
+        body.citizen-win-bg { 
+            background: radial-gradient(circle at center, #0a1f3d 0%, #000000 100%); 
+        }
+        
+        .viewport { 
+            width: 100%; height: 100dvh; 
+            display: flex; justify-content: center; align-items: center; 
+            position: relative; overflow: hidden; 
+        }
+        
+        .screen { 
+            position: absolute; width: 94%; max-width: 440px; 
+            opacity: 0; visibility: hidden; 
+            transform: translateY(15px); transition: 0.3s ease; 
+            text-align: center; z-index: 1; 
+            overflow-y: auto; max-height: 98dvh; padding: 10px; 
+        }
+        
+        .screen.active { 
+            opacity: 1; visibility: visible; 
+            transform: translateY(0); z-index: 10; 
+        }
         .giant-selector { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 20px 0; }
         .btn-giant { width: 75px; height: 75px; border-radius: 50%; font-size: 2.2rem; background: #222; color: #fff; border: 3px solid var(--accent-gold); cursor: pointer; }
         .btn-giant:active { background: #444; }
