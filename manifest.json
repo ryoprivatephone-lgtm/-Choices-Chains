@@ -1,19 +1,13 @@
 {
   "name": "誘惑と鉄鎖",
   "short_name": "誘惑と鉄鎖",
-  "description": "「最初から最後まで立場を変えない」などの厳しい『枷』を守りながら、人狼を見つけ出せ！",
-  "start_url": "/-Choices-Chains/index.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#050505",
   "theme_color": "#ff1a1a",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192x192.png?text=Game",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "https://via.placeholder.com/512x512.png?text=Game",
+      "src": "icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
