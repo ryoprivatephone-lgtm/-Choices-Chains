@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>誘惑と鉄鎖 - Choices & Chains</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-color:#050505; --card-bg:rgba(20,20,20,0.95); --neon-red:#ff1a1a; --accent-red:#8e0000; --accent-blue:#45aaf2; --accent-gold:#f1c40f; --accent-purple:#a55eea; --text-color:#e0e0e0; }
+        * { touch-action:manipulation; box-sizing:border-box; outline:none; }
+        body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:radial-gradient(circle at center, #1a0505 0%, #050505 100%); font-family:'Noto Sans JP', sans-serif; color:var(--text-color); transition: background 1.5s ease; }
+        body.citizen-win-bg { background: radial-gradient(circle at center, #0a1f3d 0%, #050505 100%); }
+        .viewport { width:100%; height:100dvh; display:flex; justify-content:center; align-items:center; position:relative; overflow:hidden; }
+        .screen { position:absolute; width:90%; max-width:380px; opacity:0; visibility:hidden; transform:translateY(15px); transition:0.5s ease; text-align:center; z-index:1; }
+        .screen.active { opacity:1; visibility:visible; transform:translateY(0); z-index:10; }
+        h1 { font-family:'Cinzel', serif; font-size:1.8rem; letter-spacing:4px; color:var(--neon-red); text-shadow:0 0 15px rgba(255, 26, 26, 0.6); margin:0 0 5px; }
+        .card { background:var(--card-bg); border:1px solid #301010; border-radius:20px; padding:20px; box-shadow: 0 0 30px rgba(0,0,0,1); position:relative; overflow:hidden; transition: all 1s ease; }
+        .card.citizen-win-card { border-color: var(--accent-gold); box-shadow: 0 0 50px rgba(241, 196, 15, 0.4); background: rgba(15, 25, 40, 0.95); }
+        .shine-effect { position: absolute; top: 0; left: -100%; width: 60%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.15), transparent); transform: skewX(-25deg); pointer-events: none; }
+        .citizen-win-card .shine-effect { animation: shine 4s infinite; }
+        @keyframes shine { 100% { left: 200%; } }
+        input, textarea, select { width:100%; background:#111; border:1px solid #442222; color:white; padding:10px; margin-bottom:8px; border-radius:8px; font-size:14px; }
+        button { width:100%; padding:14px; border-radius:10px; border:none; cursor:pointer; font-weight:bold; margin-top:8px; transition:0.3s; font-size:1rem; }
+        button:disabled { background:#222 !important; color:#555 !important; cursor:not-allowed; opacity: 0.3; }
+        .btn-primary { background:var(--accent-red); color:#fff; }
+        .btn-outline { background:transparent; border: 1px solid #553333; color: #aaa; }
+        .btn-flex { display:flex; gap:10px; } .btn-flex button { flex:1; }
+        .color-人狼 { color: var(--neon-red) !important; text-shadow: 0 0 10px var(--neon-red); }
+        .color-占い師 { color: var(--accent-purple) !important; text-shadow: 0 0 10px var(--accent-purple); }
+        .color-囚人 { color: var(--accent-blue) !important; text-shadow: 0 0 10px var(--accent-blue); }
+        .color-富豪 { color: var(--accent-gold) !important; text-shadow: 0 0 10px var(--accent-gold); }
+        .color-市民勝利 { color: var(--accent-gold) !important; text-shadow: 0 0 20px var(--accent-gold); font-size: 2.2rem; }
+        #timer-display { font-size:3.5rem; font-family:'Cinzel', serif; margin:5px 0; color:#fff; }
+        #status-bar { position:fixed; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.9); font-size:11px; padding:5px; color:#666; text-align:center; z-index:999; }
+        .shackle-check-panel { margin-bottom: 20px; padding: 15px; border-radius: 12px; background: rgba(69, 170, 242, 0.1); border: 1px solid var(--accent-blue); }
+        .btn-yes.active { background: var(--accent-blue) !important; color: white !important; }
+        .btn-no.active { background: var(--accent-red) !important; color: white !important; }
+        .offline-vote-row { display: flex; justify-content: space-between; align-items: center; background: #151515; padding: 8px 12px; border-radius: 10px; margin-bottom: 5px; font-size: 0.9rem; }
+        .offline-vote-row select { width: 60px; margin: 0; padding: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="viewport">
+    <!-- 1. ロビー画面 -->
+    <div id="screen-lobby" class="screen active">
+        <h1>誘惑と鉄鎖</h1>
+        <div class="card">
+            <div id="initial-setup">
+                <input type="text" id="user-name" placeholder="あなたの名前">
+                <button class="btn-primary" id="host-init-btn" disabled onclick="initHost()">部屋を作る（オンライン）</button>
+                <button class="btn-outline" onclick="startOfflineSetup()">対面でプレイ（オフライン）</button>
+                <div style="margin:15px 0; border-top:1px solid #331111;"></div>
+                <input type="text" id="room-id-input" placeholder="Room IDを入力">
+                <button id="join-init-btn" class="btn-outline" disabled onclick="initGuest()">部屋に参加する</button>
+            </div>
+            
+            <div id="lobby-waiting" style="display:none;">
+                <p id="display-id" style="color:var(--neon-red); font-weight:bold;"></p>
+                <div id="member-list" style="text-align:left; font-size:0.8rem; margin:10px 0;"></div>
+                <div id="shackle-area">
+                    <div id="host-input-wrap" style="display:none;">
+                        <textarea id="shackles-input" rows="3" oninput="syncShackles()">相手に3回以上反論する
+特定のワードを5回言う
+語尾に「にゃん」を付ける</textarea>
+                        <button id="start-btn" class="btn-primary" onclick="hostStartGame()">儀式を開始する</button>
+                    </div>
+                    <div id="shackles-preview" style="text-align:left; font-size:0.75rem; color:var(--accent-blue); background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; max-height: 100px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- オフライン設定画面 -->
+    <div id="screen-offline-setup" class="screen">
+        <h1>Offline Setup</h1>
+        <div class="card">
+            <input type="text" id="off-p1" placeholder="プレイヤー1">
+            <input type="text" id="off-p2" placeholder="プレイヤー2">
+            <input type="text" id="off-p3" placeholder="プレイヤー3">
+            <input type="text" id="off-p4" placeholder="プレイヤー4">
+            <textarea id="off-shackles" rows="3">相手に3回以上反論する
+特定のワードを5回言う</textarea>
+            <button class="btn-primary" onclick="initOfflineGame()">儀式を始める</button>
+            <button class="btn-outline" onclick="show('screen-lobby')">戻る</button>
+        </div>
+    </div>
+
+    <!-- 共通：確認画面 -->
+    <div id="screen-confirm" class="screen">
+        <div class="card"><h2 id="confirm-name"></h2><p style="color:#888;">役職を表示します。</p><button class="btn-primary" onclick="showRole()">はい、私です</button></div>
+    </div>
+
+    <!-- 共通：役職・ターゲット選択 -->
+    <div id="screen-reveal" class="screen">
+        <div class="card">
+            <h1 id="my-role-name"></h1><div id="my-role-icon" style="font-size:4rem;"></div>
+            <div id="ww-choice" style="display:none; margin-top:15px;">
+                <div class="btn-flex"><button id="target-A" class="btn-outline" onclick="selectTarget('A')">A</button><button id="target-B" class="btn-outline" onclick="selectTarget('B')">B</button></div>
+            </div>
+            <button id="reveal-done-btn" class="btn-primary" style="margin-top:20px;" onclick="playerReady()">確認完了</button>
+            <p id="ready-wait-msg" style="display:none; color:#888; font-size:0.8rem; margin-top:20px;">待機中...</p>
+        </div>
+    </div>
+
+    <!-- 共通：議論 -->
+    <div id="screen-discussion" class="screen">
+        <h1>DISCUSSION</h1>
+        <div class="card">
+            <div id="timer-display">05:00</div>
+            <div id="special-info" style="margin:10px 0; padding:12px; border:1px dashed #442222; border-radius:10px; font-size:0.9rem; min-height:50px;"></div>
+            <div id="host-controls" style="display:none;">
+                <div class="btn-flex"><button class="btn-outline" onclick="adjustTime(60)">+1:00</button><button class="btn-outline" onclick="adjustTime(-60)">-1:00</button></div>
+                <button id="timer-btn" class="btn-primary" onclick="toggleTimer()">一時停止</button>
+                <button class="btn-outline" onclick="hostGoToVote()">投票へ進む</button>
+            </div>
+            <div id="off-controls" style="display:none;"><button class="btn-primary" onclick="hostGoToVote()">議論終了（投票へ）</button></div>
+        </div>
+    </div>
+
+    <!-- 共通：投票 -->
+    <div id="screen-vote" class="screen">
+        <h1>VOTING</h1>
+        <div class="card">
+            <div id="online-vote-ui" style="display:none;">
+                <div id="shackle-confirm-step" style="display:none;" class="shackle-check-panel">
+                    <p>「枷」は達成できましたか？</p>
+                    <div class="btn-flex">
+                        <button id="shackle-yes" class="btn-outline btn-yes" onclick="setShackleStatus(true)">はい</button>
+                        <button id="shackle-no" class="btn-outline btn-no" onclick="setShackleStatus(false)">いいえ</button>
+                    </div>
+                </div>
+                <p id="vote-guide">最終回答を選択してください</p>
+                <div id="vote-action-area" class="btn-flex"><button id="vbtn-A" class="btn-outline" onclick="submitVote('A')">A</button><button id="vbtn-B" class="btn-outline" onclick="submitVote('B')">B</button></div>
+                <p id="vote-status-text" style="margin-top:20px; font-size:0.9rem; color:#888;"></p>
+                <p id="opening-msg" style="display:none; color:var(--accent-gold); font-weight:bold;">集計完了。まもなく開票...</p>
+            </div>
+            <div id="offline-vote-ui" style="display:none;">
+                <div id="off-shackle-check" class="shackle-check-panel">
+                    <p>囚人は「枷」を達成しましたか？</p>
+                    <div class="btn-flex">
+                        <button id="off-shackle-yes" class="btn-outline btn-yes" onclick="shackleAchieved=true; this.classList.add('active'); document.getElementById('off-shackle-no').classList.remove('active');">はい</button>
+                        <button id="off-shackle-no" class="btn-outline btn-no" onclick="shackleAchieved=false; this.classList.add('active'); document.getElementById('off-shackle-yes').classList.remove('active');">いいえ</button>
+                    </div>
+                </div>
+                <div id="offline-vote-list"></div>
+                <button class="btn-primary" onclick="calcOfflineResult()">開票する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 共通：結果 -->
+    <div id="screen-result" class="screen">
+        <h1 id="result-winner"></h1>
+        <div class="card" id="final-card">
+            <div class="shine-effect"></div>
+            <div id="result-text"></div>
+            <div id="shackle-msg" style="font-weight:bold; margin:10px 0;"></div>
+            <hr style="border:0.5px solid #331111; margin:15px 0;">
+            <div id="result-roles" style="text-align:left; font-size:0.85rem; line-height:1.7;"></div>
+            <button class="btn-primary" id="reset-btn" onclick="hostBackToSetup()">次の儀式へ</button>
+        </div>
+    </div>
+</div>
+
+<div id="status-bar">通信待機中...</div>
+
+<script>
+    let peer=null, conn=null, connections=[], isOnline=false, isHost=false;
+    let myId="", myName="", players=[], lastRoleMap={};
+    let myRoleData={}, wwTarget="", readyCount=0, votes={}, timerInt=null, timeLeft=300;
+    let shackleAchieved = true, shackleConfirmed = true, offlineStep = 0;
+    const icons = { "人狼":"😈", "占い師":"🔮", "囚人":"⛓️", "富豪":"👑" };
+
+    // --- 保存・復元機能 ---
+    function saveSettings() {
+        localStorage.setItem('cc_userName', document.getElementById('user-name').value);
+        localStorage.setItem('cc_offP1', document.getElementById('off-p1').value);
+        localStorage.setItem('cc_offP2', document.getElementById('off-p2').value);
+        localStorage.setItem('cc_offP3', document.getElementById('off-p3').value);
+        localStorage.setItem('cc_offP4', document.getElementById('off-p4').value);
+        localStorage.setItem('cc_onlineShackles', document.getElementById('shackles-input').value);
+        localStorage.setItem('cc_offlineShackles', document.getElementById('off-shackles').value);
+    }
+
+    function loadSettings() {
+        if(localStorage.getItem('cc_userName')) document.getElementById('user-name').value = localStorage.getItem('cc_userName');
+        if(localStorage.getItem('cc_offP1')) document.getElementById('off-p1').value = localStorage.getItem('cc_offP1');
+        if(localStorage.getItem('cc_offP2')) document.getElementById('off-p2').value = localStorage.getItem('cc_offP2');
+        if(localStorage.getItem('cc_offP3')) document.getElementById('off-p3').value = localStorage.getItem('cc_offP3');
+        if(localStorage.getItem('cc_offP4')) document.getElementById('off-p4').value = localStorage.getItem('cc_offP4');
+        if(localStorage.getItem('cc_onlineShackles')) document.getElementById('shackles-input').value = localStorage.getItem('cc_onlineShackles');
+        if(localStorage.getItem('cc_offlineShackles')) document.getElementById('off-shackles').value = localStorage.getItem('cc_offlineShackles');
+    }
+
+    window.onload = () => {
+        loadSettings();
+        peer = new Peer();
+        peer.on('open', id => { myId=id; log("通信サーバー接続完了"); document.getElementById('host-init-btn').disabled=false; document.getElementById('join-init-btn').disabled=false; });
+        peer.on('error', err => log("Peer Error: " + err.type));
+    };
+
+    function log(m){ document.getElementById('status-bar').innerText = m; }
+    function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+    // --- ゲーム開始処理（保存実行） ---
+    function startOfflineSetup() { isOnline = false; isHost = true; show('screen-offline-setup'); }
+
+    function initHost(){
+        saveSettings();
+        myName = document.getElementById('user-name').value; if(!myName) return alert("名前をいれて");
+        isOnline = true; isHost = true; players = [{id:myId, name:myName}];
+        document.getElementById('initial-setup').style.display='none';
+        document.getElementById('lobby-waiting').style.display='block';
+        document.getElementById('host-input-wrap').style.display='block';
+        document.getElementById('display-id').innerText="ID: " + myId;
+        updateLobbyUI(); syncShackles();
+        peer.on('connection', c=>{ connections.push(c); c.on('data', d=>handleData(d, c)); });
+    }
+
+    function initGuest(){
+        saveSettings();
+        myName = document.getElementById('user-name').value; let rid = document.getElementById('room-id-input').value.trim();
+        if(!myName || !rid) return alert("名前とIDをいれて");
+        isOnline = true; isHost = false;
+        conn = peer.connect(rid, {reliable:true});
+        conn.on('open', ()=>{
+            conn.send({type:'join', name:myName});
+            document.getElementById('initial-setup').style.display='none';
+            document.getElementById('lobby-waiting').style.display='block';
+            document.getElementById('display-id').innerText="ID: " + rid;
+        });
+        conn.on('data', d=>handleData(d, null));
+    }
+
+    function initOfflineGame(){
+        saveSettings();
+        players = [
+            {id:'p1', name:document.getElementById('off-p1').value || "P1"},
+            {id:'p2', name:document.getElementById('off-p2').value || "P2"},
+            {id:'p3', name:document.getElementById('off-p3').value || "P3"},
+            {id:'p4', name:document.getElementById('off-p4').value || "P4"}
+        ];
+        offlineStep = 0; hostStartGame();
+    }
+
+    // --- ゲーム進行共通ロジック ---
+    function syncShackles(){ if(!isHost) return; let raw=document.getElementById('shackles-input').value; document.getElementById('shackles-preview').innerText=raw; broadcast({type:'shackles-sync', raw}); }
+    function updateLobbyUI(){ document.getElementById('member-list').innerHTML=players.map(p=>"・"+p.name).join("<br>"); if(isHost){ document.getElementById('start-btn').disabled=(players.length<2); broadcast({type:'lobby', players}); } }
+    function broadcast(d){ connections.forEach(c=>c.send(d)); }
+
+    function handleData(d, c){
+        if(d.type==='join' && isHost){ players.push({id:c.peer, name:d.name}); updateLobbyUI(); syncShackles(); }
+        if(d.type==='lobby'){ players=d.players; updateLobbyUI(); show('screen-lobby'); }
+        if(d.type==='shackles-sync'){ document.getElementById('shackles-preview').innerText = d.raw; }
+        if(d.type==='start-reveal'){
+            myRoleData = d.roleMap[myId]; wwTarget = ""; readyCount=0; votes={}; timeLeft=300;
+            resetVisuals(); show('screen-confirm'); document.getElementById('confirm-name').innerText = myName;
+        }
+        if(d.type==='ww-choice' && isHost){ wwTarget = d.target; checkAllReady(); }
+        if(d.type==='player-ready' && isHost){ readyCount++; checkAllReady(); }
+        if(d.type==='start-discussion'){ wwTarget=d.target; startDiscussion(); }
+        if(d.type==='sync-time'){ timeLeft=d.time; updateTimerDisp(); if(d.active && !timerInt) startTimerLocal(); else if(!d.active && timerInt){clearInterval(timerInt); timerInt=null;} }
+        if(d.type==='go-to-vote') { triggerVoteScreen(); }
+        if(d.type==='submit-vote' && isHost){ votes[c.peer]={choice:d.choice, achieved:d.achieved}; updateOnlineVoteStatus(); }
+        if(d.type==='final-result') displayResult(d);
+        if(d.type==='back-to-setup') show('screen-lobby');
+    }
+
+    function hostStartGame(){
+        wwTarget = ""; readyCount = 0; votes = {}; timeLeft = 300;
+        let roles=["人狼", "占い師", "囚人", "富豪"].sort(()=>Math.random()-0.5);
+        let shackleSource = isOnline ? document.getElementById('shackles-input').value : document.getElementById('off-shackles').value;
+        let kase = shackleSource.split('\n').filter(s=>s.trim()).sort(()=>Math.random()-0.5)[0] || "なし";
+        let roleMap={}; players.forEach((p,i)=>{ let r=roles[i%4]; roleMap[p.id]={role:r, shackle:r==="囚人"?kase:"", votes:r==="富豪"?2:1}; });
+        lastRoleMap = roleMap;
+        if(isOnline) { broadcast({type:'start-reveal', roleMap}); myRoleData = roleMap[myId]; resetVisuals(); show('screen-confirm'); document.getElementById('confirm-name').innerText = myName; }
+        else { myRoleData = roleMap[players[0].id]; resetVisuals(); show('screen-confirm'); document.getElementById('confirm-name').innerText = players[0].name; }
+    }
+
+    function resetVisuals(){ document.body.classList.remove('citizen-win-bg'); document.getElementById('final-card').classList.remove('citizen-win-card'); shackleConfirmed = true; shackleAchieved = true; }
+
+    function showRole(){
+        show('screen-reveal');
+        document.getElementById('my-role-name').innerText = myRoleData.role;
+        document.getElementById('my-role-icon').innerText = icons[myRoleData.role];
+        document.getElementById('my-role-name').className = "color-" + myRoleData.role;
+        document.getElementById('ww-choice').style.display = (myRoleData.role==='人狼' && !wwTarget) ? 'block' : 'none';
+        document.getElementById('reveal-done-btn').style.display = (myRoleData.role==='人狼' && !wwTarget) ? 'none' : 'block';
+    }
+
+    function selectTarget(t){ wwTarget = t; document.getElementById('target-A').className = t==='A'?'btn-primary':'btn-outline'; document.getElementById('target-B').className = t==='B'?'btn-primary':'btn-outline'; document.getElementById('reveal-done-btn').style.display='block'; }
+
+    function playerReady(){
+        if(isOnline){
+            document.getElementById('reveal-done-btn').style.display='none';
+            if(isHost){ readyCount++; checkAllReady(); }
+            else { if(myRoleData.role==='人狼')conn.send({type:'ww-choice', target:wwTarget}); conn.send({type:'player-ready'}); }
+        } else {
+            offlineStep++;
+            if(offlineStep < 4){
+                myRoleData = lastRoleMap[players[offlineStep].id];
+                document.getElementById('confirm-name').innerText = players[offlineStep].name;
+                show('screen-confirm');
+            } else { startDiscussion(); }
+        }
+    }
+
+    function checkAllReady(){ if(readyCount===players.length && wwTarget){ broadcast({type:'start-discussion', target:wwTarget}); startDiscussion(); }}
+
+    function startDiscussion(){
+        show('screen-discussion');
+        let info = document.getElementById('special-info');
+        if(myRoleData.role==='占い師') info.innerHTML="ターゲット: <b class='color-占い師'>"+wwTarget+"</b>";
+        else if(myRoleData.role==='囚人') info.innerHTML="あなたの枷: <b class='color-囚人'>"+myRoleData.shackle+"</b>";
+        else info.innerText="議論を開始してください";
+        if(isOnline && isHost){ document.getElementById('host-controls').style.display='block'; if(!timerInt) toggleTimer(); }
+        else if(!isOnline) { document.getElementById('off-controls').style.display='block'; if(!timerInt) startTimerLocal(); }
+    }
+
+    function startTimerLocal(){ timerInt=setInterval(()=>{if(timeLeft>0){timeLeft--;updateTimerDisp();}},1000); }
+    function toggleTimer(){ if(timerInt){clearInterval(timerInt);timerInt=null;document.getElementById('timer-btn').innerText="再開";}else{startTimerLocal();document.getElementById('timer-btn').innerText="一時停止";} if(isHost)broadcast({type:'sync-time', time:timeLeft, active:!!timerInt}); }
+    function updateTimerDisp(){ let m=Math.floor(timeLeft/60).toString().padStart(2,'0'), s=(timeLeft%60).toString().padStart(2,'0'); document.getElementById('timer-display').innerText=m+":"+s; }
+    function adjustTime(v){ timeLeft=Math.max(0,timeLeft+v); updateTimerDisp(); if(isHost)broadcast({type:'sync-time', time:timeLeft, active:!!timerInt}); }
+
+    function hostGoToVote(){ if(timerInt) { clearInterval(timerInt); timerInt=null; } if(isOnline) { broadcast({type:'go-to-vote'}); triggerVoteScreen(); } else { triggerOfflineVoteScreen(); } }
+
+    function triggerVoteScreen() {
+        show('screen-vote'); document.getElementById('online-vote-ui').style.display='block'; document.getElementById('offline-vote-ui').style.display='none';
+        const isP = (myRoleData.role==='囚人'); document.getElementById('shackle-confirm-step').style.display=isP?'block':'none';
+        document.getElementById('vbtn-A').disabled=isP; document.getElementById('vbtn-B').disabled=isP;
+        shackleConfirmed=!isP;
+    }
+
+    function setShackleStatus(a){ shackleAchieved=a; shackleConfirmed=true; document.getElementById('shackle-yes').className=a?"btn-yes active":"btn-outline btn-yes"; document.getElementById('shackle-no').className=!a?"btn-no active":"btn-outline btn-no"; document.getElementById('vbtn-A').disabled=false; document.getElementById('vbtn-B').disabled=false; }
+
+    function submitVote(choice){
+        document.getElementById('vote-action-area').style.display='none'; document.getElementById('shackle-confirm-step').style.display='none';
+        if(isHost){ votes[myId]={choice, achieved:shackleAchieved}; updateOnlineVoteStatus(); }
+        else { conn.send({type:'submit-vote', choice, achieved:shackleAchieved}); document.getElementById('vote-status-text').innerText="集計中..."; }
+    }
+
+    function updateOnlineVoteStatus() { let c=Object.keys(votes).length; document.getElementById('vote-status-text').innerText="状況: "+c+"/"+players.length; if(c===players.length){document.getElementById('opening-msg').style.display='block'; setTimeout(calcResult,2000);} }
+
+    function triggerOfflineVoteScreen(){
+        show('screen-vote'); document.getElementById('online-vote-ui').style.display='none'; document.getElementById('offline-vote-ui').style.display='block';
+        document.getElementById('offline-vote-list').innerHTML = players.map(p=>`<div class="offline-vote-row"><span>${p.name}</span><select id="off-v-${p.id}"><option value="A">A</option><option value="B">B</option></select></div>`).join("");
+    }
+
+    function calcOfflineResult(){
+        shackleAchieved = document.getElementById('off-shackle-yes').classList.contains('active');
+        players.forEach(p => votes[p.id]={choice:document.getElementById(`off-v-${p.id}`).value, achieved:shackleAchieved});
+        calcResult();
+    }
+
+    function calcResult(){
+        let sA=0, sB=0, sS=true;
+        players.forEach(p=>{ let v=votes[p.id], r=lastRoleMap[p.id]; if(v.choice==='A') sA+=r.votes; else sB+=r.votes; if(r.role==='囚人' && !v.achieved) sS=false; });
+        let fA = sA>=sB?'A':'B'; let w=(fA===wwTarget)||!sS;
+        let rd={finalAns:fA, scoreA:sA, scoreB:sB, wwTarget, werewolfWins:w, sSuccess:sS, votes, players, roleMap:lastRoleMap};
+        if(isOnline) broadcast({type:'final-result', ...rd}); displayResult(rd);
+    }
+
+    function displayResult(d){
+        show('screen-result'); let wl=document.getElementById('result-winner'), card=document.getElementById('final-card'), resetBtn=document.getElementById('reset-btn');
+        if(d.werewolfWins){ wl.innerText="人狼の勝利"; wl.className="color-人狼"; resetBtn.style.background="var(--accent-red)"; }
+        else { wl.innerText="市民の勝利"; wl.className="color-市民勝利"; document.body.classList.add('citizen-win-bg'); card.classList.add('citizen-win-card'); resetBtn.style.background="var(--accent-gold)"; }
+        document.getElementById('shackle-msg').innerText=d.sSuccess?"【枷】達成！":"【枷】未達成により敗北";
+        document.getElementById('shackle-msg').style.color=d.sSuccess?"var(--accent-blue)":"var(--accent-red)";
+        document.getElementById('result-text').innerHTML="回答: <b>"+d.finalAns+"</b> (A:"+d.scoreA+" / B:"+d.scoreB+")<br>人狼の狙い: <b>"+d.wwTarget+"</b>";
+        document.getElementById('result-roles').innerHTML=d.players.map(p=>`<div>${p.name}: <span class='color-${d.roleMap[p.id].role}'>${d.roleMap[p.id].role}</span> (${d.votes[p.id].choice})</div>`).join("");
+        resetBtn.style.display=(isHost)?'block':'none';
+    }
+
+    function hostBackToSetup(){
+        if(isOnline) { broadcast({type:'back-to-setup'}); show('screen-lobby'); }
+        else { show('screen-offline-setup'); }
+    }
+</script>
+</body>
+</html>
