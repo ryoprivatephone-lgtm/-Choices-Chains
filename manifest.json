@@ -2,7 +2,7 @@
   "name": "誘惑と鉄鎖",
   "short_name": "誘惑と鉄鎖",
   "description": "「最初から最後まで立場を変えない」などの厳しい『枷』を守りながら、人狼を見つけ出せ！オンライン・オフライン両対応の新感覚パーティーゲーム。",
-  "start_url": "index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#050505",
   "theme_color": "#ff1a1a",
