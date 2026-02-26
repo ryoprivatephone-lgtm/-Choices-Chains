@@ -14,16 +14,27 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
 
-    <style>
-        :root { --bg-color:#050505; --card-bg:rgba(20,20,20,0.95); --neon-red:#ff1a1a; --accent-red:#8e0000; --accent-blue:#45aaf2; --accent-gold:#f1c40f; --accent-purple:#a55eea; --accent-orange:#e67e22; --text-color:#e0e0e0; }
+<style>
+        :root { 
+            --bg-color:#050505; 
+            --card-bg:rgba(20,20,20,0.95); 
+            --neon-red:#ff1a1a; 
+            --accent-red:#8e0000; 
+            --accent-blue:#45aaf2; 
+            --accent-gold:#f1c40f; 
+            --accent-purple:#a55eea; 
+            --accent-orange:#e67e22; 
+            --text-color:#e0e0e0; 
+        }
+
+        /* 基本設定 */
         * { touch-action:manipulation; box-sizing:border-box; outline:none; }
 
-        h1 { font-family:'Cinzel', serif; font-size:1.6rem; letter-spacing:4px; color:var(--neon-red); text-shadow:0 0 15px rgba(255, 26, 26, 0.6); margin: 0 0 10px; }
-        .card { background:var(--card-bg); border:1px solid #301010; border-radius:20px; padding:15px; box-shadow: 0 0 30px rgba(0,0,0,1); position:relative; }
-body, html { 
+        /* 全体背景とスマホ最適化 */
+        body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             overflow: hidden; 
-            /* 背景のベースを黒にしつつ、中央に赤みを残す */
+            /* 端を完全な黒(#000000)にすることでiPhoneのバーと一体化 */
             background: radial-gradient(circle at center, #1a0505 0%, #000000 100%); 
             font-family: 'Noto Sans JP', sans-serif; 
             color: var(--text-color); 
@@ -33,7 +44,8 @@ body, html {
         body.citizen-win-bg { 
             background: radial-gradient(circle at center, #0a1f3d 0%, #000000 100%); 
         }
-        
+
+        /* レイアウト設定 */
         .viewport { 
             width: 100%; height: 100dvh; 
             display: flex; justify-content: center; align-items: center; 
@@ -51,6 +63,19 @@ body, html {
         .screen.active { 
             opacity: 1; visibility: visible; 
             transform: translateY(0); z-index: 10; 
+        }
+
+        /* テキストとカードのデザイン */
+        h1 { 
+            font-family:'Cinzel', serif; font-size:1.6rem; 
+            letter-spacing:4px; color:var(--neon-red); 
+            text-shadow:0 0 15px rgba(255, 26, 26, 0.6); margin: 0 0 10px; 
+        }
+
+        .card { 
+            background:var(--card-bg); border:1px solid #301010; 
+            border-radius:20px; padding:15px; 
+            box-shadow: 0 0 30px rgba(0,0,0,1); position:relative; 
         }
         .giant-selector { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 20px 0; }
         .btn-giant { width: 75px; height: 75px; border-radius: 50%; font-size: 2.2rem; background: #222; color: #fff; border: 3px solid var(--accent-gold); cursor: pointer; }
