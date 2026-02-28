@@ -2,87 +2,28 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>誘惑と鉄鎖 - Ver.33 (通信強化版)</title>
-
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
-    <meta name="theme-color" content="#000000">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>誘惑と鉄鎖 - Ver.31 (WebSocket Edition)</title>
+    <!-- PieSocket (WebRTCではなくWebSocketを使用しWi-Fi制限を回避) -->
+    <script src="https://unpkg.com/piesocket-js@5"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
-    
     <style>
-        :root { 
-            --bg-color:#050505; 
-            --card-bg:rgba(20,20,20,0.95); 
-            --neon-red:#ff1a1a; 
-            --accent-red:#8e0000; 
-            --accent-blue:#45aaf2; 
-            --accent-gold:#f1c40f; 
-            --accent-purple:#a55eea; 
-            --accent-orange:#e67e22; 
-            --text-color:#e0e0e0; 
-        }
-
+        :root { --bg-color:#050505; --card-bg:rgba(20,20,20,0.95); --neon-red:#ff1a1a; --accent-red:#8e0000; --accent-blue:#45aaf2; --accent-gold:#f1c40f; --accent-purple:#a55eea; --accent-orange:#e67e22; --text-color:#e0e0e0; }
         * { touch-action:manipulation; box-sizing:border-box; outline:none; }
-
-        /* 全体背景：端を完全な黒(#000000)に固定してステータスバーと一体化 */
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden; 
-            background: #000000; 
-            font-family: 'Noto Sans JP', sans-serif; 
-            color: var(--text-color); 
-            transition: background 1.5s ease; 
-        }
-
-        body.citizen-win-bg { 
-            background: radial-gradient(circle at center, #0a1f3d 0%, #000000 100%); 
-        }
-
-        /* dvhを使用してiPhoneのメニューバー等の干渉を防ぐ */
-        .viewport { 
-            width: 100%; height: 100dvh; 
-            display: flex; justify-content: center; align-items: center; 
-            position: relative; overflow: hidden; 
-            background: radial-gradient(circle at center, #1a0505 0%, #000000 100%);
-        }
-
-        .screen { 
-            position: absolute; width: 94%; max-width: 440px; 
-            opacity: 0; visibility: hidden; 
-            transform: translateY(15px); transition: 0.3s ease; 
-            text-align: center; z-index: 1; 
-            overflow-y: auto; max-height: 98dvh; padding: 10px; 
-        }
-
-        .screen.active { 
-            opacity: 1; visibility: visible; 
-            transform: translateY(0); z-index: 10; 
-        }
+        body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:radial-gradient(circle at center, #1a0505 0%, #050505 100%); font-family:'Noto Sans JP', sans-serif; color:var(--text-color); transition: background 1.5s ease; }
+        body.citizen-win-bg { background: radial-gradient(circle at center, #0a1f3d 0%, #050505 100%); }
+        .viewport { width:100%; height:100dvh; display:flex; justify-content:center; align-items:center; position:relative; overflow:hidden; }
+        .screen { position:absolute; width:94%; max-width:440px; opacity:0; visibility:hidden; transform:translateY(15px); transition:0.3s ease; text-align:center; z-index:1; overflow-y: auto; max-height: 98dvh; padding: 10px; }
+        .screen.active { opacity:1; visibility:visible; transform:translateY(0); z-index:10; }
         
-        h1 { 
-            font-family: 'Cinzel', serif; font-size: 1.6rem; 
-            letter-spacing: 4px; color: var(--neon-red); 
-            text-shadow: 0 0 15px rgba(255, 26, 26, 0.6); margin: 0 0 10px; 
-        }
+        h1 { font-family:'Cinzel', serif; font-size:1.6rem; letter-spacing:4px; color:var(--neon-red); text-shadow:0 0 15px rgba(255, 26, 26, 0.6); margin: 0 0 10px; }
+        .card { background:var(--card-bg); border:1px solid #301010; border-radius:20px; padding:15px; box-shadow: 0 0 30px rgba(0,0,0,1); position:relative; transition: all 1s ease; }
 
-        .card { 
-            background: var(--card-bg); border: 1px solid #301010; 
-            border-radius: 20px; padding: 15px; 
-            box-shadow: 0 0 30px rgba(0,0,0,1); position: relative; 
-        }
-
-        /* 特大ボタン */
         .giant-selector { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 20px 0; }
-        .btn-giant { width: 85px; height: 85px; border-radius: 50%; font-size: 2.5rem; background: #222; color: #fff; border: 3px solid var(--accent-gold); cursor: pointer; }
-        .btn-giant:active { background: #444; }
-        .display-giant { font-size: 5rem; font-family: 'Cinzel', serif; color: var(--accent-gold); min-width: 80px; text-shadow: 0 0 20px var(--accent-gold); }
+        .btn-giant { width: 75px; height: 75px; border-radius: 50%; font-size: 2.2rem; background: #222; color: #fff; border: 3px solid var(--accent-gold); cursor: pointer; }
+        .btn-giant:active { background: #444; transform: scale(0.9); }
+        .display-giant { font-size: 4rem; font-family: 'Cinzel', serif; color: var(--accent-gold); min-width: 60px; text-shadow: 0 0 20px var(--accent-gold); }
 
-        /* 役職ステッパー */
         .role-step-container { margin: 12px 0; border-bottom: 1px solid #222; padding-bottom: 12px; }
         .role-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 5px; font-size: 1.1rem; }
         .stepper { display: flex; justify-content: center; align-items: center; gap: 35px; margin-top: 5px; }
@@ -92,9 +33,10 @@
 
         .villager-banner { background: rgba(255,255,255,0.08); border: 2px dashed #666; border-radius: 15px; padding: 15px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; }
         .v-label { font-size: 1.1rem; color: #fff; }
-        .v-count { font-size: 3rem; font-family: 'Cinzel', serif; color: #fff; }
+        .v-count { font-size: 2.5rem; font-family: 'Cinzel', serif; color: #fff; }
 
-        input, textarea { width:100%; background:#111; border:1px solid #442222; color:white; padding:12px; margin-bottom:8px; border-radius:8px; font-size:16px; }
+        input, textarea { width:100%; background:#111; border:1px solid #442222; color:white; padding:12px; margin-bottom:8px; border-radius:8px; font-size:16px; transition: 0.3s; }
+        textarea[readonly] { background: #222; color: #888; border-color: #333; }
         button { width:100%; padding:14px; border-radius:10px; border:none; cursor:pointer; font-weight:bold; margin-top:8px; transition:0.2s; font-size:1rem; }
         button:disabled { background:#222 !important; color:#555 !important; cursor:not-allowed; opacity:1; }
         .btn-primary { background:var(--accent-red); color:#fff; }
@@ -107,13 +49,8 @@
         .color-囚人 { color: var(--accent-blue) !important; text-shadow: 0 0 10px var(--accent-blue); }
         .color-富豪 { color: var(--accent-gold) !important; text-shadow: 0 0 10px var(--accent-gold); }
         .color-市民勝利 { color: var(--accent-gold) !important; text-shadow: 0 0 20px var(--accent-gold); font-size: 2.2rem; }
-        
         #timer-display { font-size:4.5rem; font-family:'Cinzel', serif; margin:10px 0; color:#fff; }
         #status-bar { position:fixed; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.9); font-size:11px; padding:5px; color:#666; text-align:center; z-index:999; }
-        
-        .shackle-check-panel { margin-bottom: 20px; padding: 15px; border-radius: 12px; background: rgba(69, 170, 242, 0.1); border: 1px solid var(--accent-blue); }
-        .btn-yes.active { background: var(--accent-blue) !important; color: white !important; border-color: var(--accent-blue) !important; }
-        .btn-no.active { background: var(--accent-red) !important; color: white !important; border-color: var(--accent-red) !important; }
     </style>
 </head>
 <body>
@@ -124,23 +61,24 @@
         <h1>誘惑と鉄鎖</h1>
         <div class="card">
             <div id="initial-setup">
-                <input type="text" id="user-name" placeholder="プレイヤー名">
-                <button class="btn-primary" id="host-init-btn" disabled onclick="initHost()">部屋を作る</button>
+                <input type="text" id="user-name" placeholder="あなたの名前">
+                <button class="btn-primary" id="host-init-btn" onclick="initHost()">部屋を作る</button>
                 <button class="btn-outline" onclick="startOfflineSetup()">対面でプレイ</button>
                 <div style="margin:15px 0; border-top:1px solid #331111;"></div>
-                <input type="text" id="room-id-input" placeholder="Room IDを入力">
-                <button id="join-init-btn" class="btn-outline" disabled onclick="initGuest()">部屋に参加</button>
+                <input type="text" id="room-id-input" placeholder="Room ID (数字4桁)">
+                <button id="join-init-btn" class="btn-outline" onclick="initGuest()">部屋に参加</button>
             </div>
             <div id="lobby-waiting" style="display:none;">
-                <p id="display-id" style="color:var(--neon-red); font-weight:bold; font-size: 1.2rem;"></p>
-                <div id="member-list" style="text-align:left; font-size:0.9rem; margin:15px 0;"></div>
-                <button id="host-go-to-config" class="btn-primary" style="display:none;" onclick="showRoleConfig()">役職設定へ</button>
-                <p id="guest-waiting-msg" style="display:none; font-size:0.8rem; color:#888;">ホストの設定を待っています...</p>
+                <p id="display-id" style="color:var(--neon-red); font-weight:bold; font-size: 1.5rem; letter-spacing: 2px;"></p>
+                <p style="font-size: 0.8rem; color: #888;">このIDを友達に教えてください</p>
+                <div id="member-list" style="text-align:left; font-size:0.9rem; margin:15px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px;"></div>
+                <button id="host-go-to-config" class="btn-primary" style="display:none;" onclick="showRoleConfig()">役職設定へ進む</button>
+                <p id="guest-waiting-msg" style="display:none; font-size:0.8rem; color:var(--accent-gold);">ホストの操作を待っています...</p>
             </div>
         </div>
     </div>
 
-    <!-- 2. オフライン人数・名前設定 -->
+    <!-- 2. オフライン人数設定 -->
     <div id="screen-offline-setup" class="screen">
         <h1>Player Count</h1>
         <div class="card" style="border: 2px solid var(--accent-gold);">
@@ -151,11 +89,14 @@
                 <button class="btn-giant" onclick="adjustTotalPlayers(1)">+</button>
             </div>
             <div id="off-name-container" style="max-height:150px; overflow-y:auto; margin-bottom:10px; border-top:1px solid #333; padding-top:10px;"></div>
-            <button class="btn-primary" onclick="showRoleConfig()">次へ：役職設定</button>
+            <div class="btn-flex">
+                <button class="btn-outline" onclick="history.back()">戻る</button>
+                <button class="btn-primary" onclick="showRoleConfig()">次へ</button>
+            </div>
         </div>
     </div>
 
-    <!-- 3. 役職設定 (共通) -->
+    <!-- 3. 役職設定 -->
     <div id="screen-role-config" class="screen">
         <h1>Role Settings</h1>
         <div class="card">
@@ -236,11 +177,12 @@
             <div id="timer-display">05:00</div>
             <div class="btn-flex"><button class="btn-outline" onclick="adjustTime(60)">+1:00</button><button class="btn-outline" onclick="adjustTime(-60)">-1:00</button></div>
             <div id="special-info" style="display:none; margin:10px 0; padding:12px; border:1px dashed #442222; border-radius:10px; font-size:0.9rem;"></div>
-            
-            <!-- オフライン・オンライン共通のタイマー制御 -->
-            <div id="timer-controls" style="display:none; margin-top:20px;">
+            <div id="host-controls" style="display:none; margin-top:20px;">
                 <button id="timer-btn" class="btn-primary" onclick="toggleTimer()">一時停止</button>
-                <button class="btn-outline" onclick="hostGoToVote()">議論終了（投票へ進む）</button>
+                <button class="btn-outline" onclick="hostGoToVote()">投票へ進む</button>
+            </div>
+            <div id="off-controls" style="display:none; margin-top:20px;">
+                <button class="btn-primary" onclick="hostGoToVote()">議論終了（投票へ）</button>
             </div>
         </div>
     </div>
@@ -249,7 +191,7 @@
     <div id="screen-vote" class="screen">
         <h1 id="vote-player-label">VOTING</h1>
         <div class="card">
-            <div id="shackle-confirm-step" style="display:none;" class="shackle-check-panel">
+            <div id="shackle-confirm-step" style="display:none; padding:15px; background:rgba(69, 170, 242, 0.1); border:1px solid var(--accent-blue); border-radius:12px; margin-bottom:15px;">
                 <p style="color:var(--accent-blue); font-weight:bold; margin-bottom:10px;">「枷」は達成できましたか？</p>
                 <div class="btn-flex">
                     <button id="shackle-yes" class="btn-outline" onclick="setShackleStatus(true)">はい</button>
@@ -269,7 +211,6 @@
     <div id="screen-result" class="screen">
         <h1 id="result-winner" style="font-size: 2.2rem;"></h1>
         <div class="card" id="final-card">
-            <div class="shine-effect"></div>
             <div id="result-text" style="font-size:1.2rem;"></div>
             <div id="shackle-msg" style="font-weight:bold; margin:10px 0;"></div>
             <hr style="border:0.5px solid #331111; margin:15px 0;">
@@ -279,12 +220,17 @@
     </div>
 </div>
 
-<div id="status-bar">準備中...</div>
+<div id="status-bar">通信準備中...</div>
 
 <script>
-    let peer=null, conn=null, connections=[], isOnline=false, isHost=false, totalPlayers = 4;
+    // --- WebSocket 通信 (PieSocket API) ---
+    // ※これは無料の公開WebSocketキーです。API制限回避のため、通信基盤をP2Pから切り替えました。
+    const PIESOCKET_API_KEY = "VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV";
+    let channel = null;
+
+    let isOnline=false, isHost=false, totalPlayers = 4;
     let roleCounts = { ww: 1, mad: 0, seer: 1, prisoner: 1, billionaire: 1 };
-    let myId="", myName="", players=[], lastRoleMap={};
+    let myId="", roomId="", myName="", players=[], lastRoleMap={};
     let myRoleData={}, wwTarget="", readyCount=0, votes={}, timerInt=null, timeLeft=300;
     let shackleAchieved = true, shackleConfirmed = true, offlineRound = 1, offlineStep = 0, offlineVoteStep = 0;
     let tempVoteChoice = "", tempTarget = "", wwTargetList =[]; 
@@ -292,10 +238,10 @@
 
     const icons = { "人狼":"😈", "狂人":"🤡", "占い師":"🔮", "囚人":"⛓️", "富豪":"👑", "村人":"👨‍🌾" };
 
+    // --- ブラウザバック制御 ---
     window.onpopstate = (event) => {
         if (gameStarted) { history.pushState(null, '', ''); return; }
-        if (event.state) restoreState(event.state);
-        else restoreState({ screen: 'screen-lobby', lobby: 'initial' });
+        if (event.state) restoreState(event.state); else restoreState({ screen: 'screen-lobby', lobby: 'initial' });
     };
 
     function pushHistoryState(screenId, lobbyState = null) {
@@ -332,15 +278,15 @@
     }
 
     function show(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+    function log(m){ document.getElementById('status-bar').innerText = m; }
 
     window.onload = () => { 
-        loadSettings(); 
-        peer = new Peer(); 
-        peer.on('open', id => { myId=id; log("準備完了"); document.getElementById('host-init-btn').disabled=false; document.getElementById('join-init-btn').disabled=false; }); 
+        loadSettings();
+        // ランダムなIDを生成
+        myId = Math.random().toString(36).substring(2, 8); 
+        log("待機中");
         history.replaceState({ screen: 'screen-lobby', lobby: 'initial' }, '', '');
     };
-
-    function log(m){ document.getElementById('status-bar').innerText = m; }
 
     function loadSettings() {
         document.getElementById('user-name').value = localStorage.getItem('cc_u') || "";
@@ -348,55 +294,72 @@
         updateOfflineNameInputs();
     }
 
-    function adjustTotalPlayers(v) {
-        totalPlayers = Math.max(3, Math.min(10, totalPlayers + v));
-        document.getElementById('giant-count-display').innerText = totalPlayers;
-        updateOfflineNameInputs(); updateVillagerCount();
-    }
-    
-    function updateOfflineNameInputs() {
-        const container = document.getElementById('off-name-container'); container.innerHTML = "";
-        for(let i=1; i<=totalPlayers; i++) { let saved = localStorage.getItem('cc_o'+i) || "プレイヤー"+i; container.innerHTML += `<input type="text" id="off-p${i}" value="${saved}" oninput="localStorage.setItem('cc_o${i}', this.value)">`; }
-    }
-
-    function changeRoleCount(key, v) {
-        roleCounts[key] = Math.max(0, roleCounts[key] + v);
-        if(key === 'ww' && roleCounts[key] < 1) roleCounts[key] = 1;
-        document.getElementById('val-'+key).innerText = roleCounts[key];
-        updateVillagerCount();
-    }
-
+    // --- 人数設定 ---
+    function adjustTotalPlayers(v) { totalPlayers = Math.max(3, Math.min(10, totalPlayers + v)); document.getElementById('giant-count-display').innerText = totalPlayers; updateOfflineNameInputs(); updateVillagerCount(); }
+    function updateOfflineNameInputs() { const container = document.getElementById('off-name-container'); container.innerHTML = ""; for(let i=1; i<=totalPlayers; i++) { let saved = localStorage.getItem('cc_o'+i) || "プレイヤー"+i; container.innerHTML += `<input type="text" id="off-p${i}" value="${saved}" oninput="localStorage.setItem('cc_o${i}', this.value)">`; } }
+    function changeRoleCount(key, v) { roleCounts[key] = Math.max(0, roleCounts[key] + v); if(key === 'ww' && roleCounts[key] < 1) roleCounts[key] = 1; document.getElementById('val-'+key).innerText = roleCounts[key]; updateVillagerCount(); }
     function updateVillagerCount() {
         let max = isOnline ? (players.length || 1) : totalPlayers;
         let setRoles = Object.values(roleCounts).reduce((a,b)=>a+b, 0);
         let villagers = max - setRoles;
         const vDisplay = document.getElementById('display-villager-count');
         const startBtn = document.getElementById('final-start-btn');
-        
-        if(villagers < 0 && (!isOnline || isHost)) {
-            vDisplay.innerText = villagers; vDisplay.style.color = "var(--neon-red)";
-            startBtn.disabled = true; startBtn.innerText = "役職数が多すぎます";
-        } else {
-            vDisplay.innerText = villagers; vDisplay.style.color = "#fff";
-            startBtn.disabled = false; startBtn.innerText = "役職確認へ進む";
-        }
+        if(villagers < 0 && (!isOnline || isHost)) { vDisplay.innerText = villagers; vDisplay.style.color = "var(--neon-red)"; startBtn.disabled = true; startBtn.innerText = "役職オーバー"; } 
+        else { vDisplay.innerText = villagers; vDisplay.style.color = "#fff"; startBtn.disabled = false; startBtn.innerText = "役職確認へ進む"; }
         if(isOnline && isHost) syncConfig();
     }
 
-    function syncConfig() {
-        if(!isHost || !isOnline) return;
-        broadcast({ type: 'config-sync', roleCounts: roleCounts, shackles: document.getElementById('global-shackles').value, villagers: document.getElementById('display-villager-count').innerText });
+    function syncConfig() { if(!isHost || !isOnline) return; broadcast({ type: 'config-sync', roleCounts: roleCounts, shackles: document.getElementById('global-shackles').value, villagers: document.getElementById('display-villager-count').innerText }); }
+    function startOfflineSetup() { isOnline = false; isHost = true; updateOfflineNameInputs(); pushHistoryState('screen-offline-setup'); restoreState({ screen: 'screen-offline-setup' }); }
+
+    // --- WebSocket 通信接続 ---
+    function initWebSocket(rId, isHosting) {
+        log("サーバーに接続中...");
+        const piesocket = new PieSocket.default({ clusterId: "free.piesocket.com", apiKey: PIESOCKET_API_KEY });
+        piesocket.subscribe(rId).then(ch => {
+            channel = ch;
+            log("接続成功");
+            channel.listen('system', (data, meta) => { handleData(data); });
+            if(isHosting) {
+                isOnline = true; isHost = true; roomId = rId; players = [{id:myId, name:myName}]; 
+                document.getElementById('initial-setup').style.display='none'; document.getElementById('lobby-waiting').style.display='block'; document.getElementById('display-id').innerText="ROOM ID: " + roomId; 
+                updateLobbyUI(); pushHistoryState('screen-lobby', 'waiting'); restoreState({ screen: 'screen-lobby', lobby: 'waiting' });
+            } else {
+                isOnline = true; isHost = false; roomId = rId;
+                broadcast({type:'join', id:myId, name:myName});
+                document.getElementById('initial-setup').style.display='none'; document.getElementById('lobby-waiting').style.display='block'; document.getElementById('display-id').innerText="ROOM ID: " + roomId; 
+                pushHistoryState('screen-lobby', 'waiting'); restoreState({ screen: 'screen-lobby', lobby: 'waiting' });
+            }
+        }).catch(err => {
+            alert("通信エラー: " + err); log("接続失敗");
+            document.getElementById('host-init-btn').innerText = "部屋を作る"; document.getElementById('join-init-btn').innerText = "部屋に参加";
+        });
     }
 
-    function startOfflineSetup() { isOnline = false; isHost = true; updateOfflineNameInputs(); pushHistoryState('screen-offline-setup'); restoreState({ screen: 'screen-offline-setup' }); }
-    function initHost(){ myName = document.getElementById('user-name').value; if(!myName) return alert("名前を入力してください"); localStorage.setItem('cc_u', myName); isOnline = true; isHost = true; players =[{id:myId, name:myName}]; document.getElementById('display-id').innerText="ROOM ID: " + myId; updateLobbyUI(); peer.on('connection', c=>{ connections.push(c); c.on('data', d=>handleData(d, c)); }); pushHistoryState('screen-lobby', 'waiting'); restoreState({ screen: 'screen-lobby', lobby: 'waiting' }); }
-    function initGuest(){ myName = document.getElementById('user-name').value; let rid = document.getElementById('room-id-input').value.trim(); if(!myName || !rid) return alert("名前とIDを入力してください"); localStorage.setItem('cc_u', myName); isOnline = true; isHost = false; conn = peer.connect(rid, {reliable:true}); conn.on('open', ()=>{ conn.send({type:'join', name:myName}); document.getElementById('display-id').innerText="ID: " + rid; pushHistoryState('screen-lobby', 'waiting'); restoreState({ screen: 'screen-lobby', lobby: 'waiting' }); }); conn.on('data', d=>handleData(d, null)); }
-    function updateLobbyUI(){ document.getElementById('member-list').innerHTML=players.map(p=>"・"+p.name).join("<br>"); if(isHost){ document.getElementById('host-go-to-config').style.display = (players.length>=2) ? 'block' : 'none'; broadcast({type:'lobby', players}); } }
-    function broadcast(d){ connections.forEach(c=>c.send(d)); }
+    function initHost(){ 
+        myName = document.getElementById('user-name').value; if(!myName) return alert("名前を入力してください"); 
+        localStorage.setItem('cc_u', myName); 
+        document.getElementById('host-init-btn').innerText = "接続中...";
+        let newRoomId = Math.floor(1000 + Math.random() * 9000).toString(); // 4桁のわかりやすい数字ID
+        initWebSocket("room_" + newRoomId, true);
+    }
+    
+    function initGuest(){ 
+        myName = document.getElementById('user-name').value; let rid = document.getElementById('room-id-input').value.trim(); 
+        if(!myName || !rid) return alert("名前とIDを入力してください"); localStorage.setItem('cc_u', myName); 
+        document.getElementById('join-init-btn').innerText = "接続中...";
+        initWebSocket("room_" + rid, false);
+    }
+
+    function updateLobbyUI(){ 
+        document.getElementById('member-list').innerHTML=players.map(p=>"・"+p.name).join("<br>"); 
+        if(isHost){ document.getElementById('host-go-to-config').style.display = (players.length>=2) ? 'block' : 'none'; broadcast({type:'lobby', players}); } 
+    }
+    function broadcast(d){ if(channel) channel.publish('system', d); }
     function showRoleConfig() { if(isOnline && isHost) broadcast({type:'show-config'}); pushHistoryState('screen-role-config'); restoreState({ screen: 'screen-role-config' }); }
 
-    function handleData(d, c){
-        if(d.type==='join' && isHost){ players.push({id:c.peer, name:d.name}); updateLobbyUI(); }
+    function handleData(d){
+        if(d.type==='join' && isHost){ players.push({id:d.id, name:d.name}); updateLobbyUI(); }
         if(d.type==='lobby'){ players=d.players; updateLobbyUI(); }
         if(d.type==='show-config'){ pushHistoryState('screen-role-config'); restoreState({ screen: 'screen-role-config' }); }
         if(d.type==='back-to-lobby-waiting'){ pushHistoryState('screen-lobby', 'waiting'); restoreState({ screen: 'screen-lobby', lobby: 'waiting' }); }
@@ -415,7 +378,7 @@
         if(d.type==='start-discussion'){ wwTarget=d.target; startDiscussion(); }
         if(d.type==='sync-time'){ timeLeft=d.time; updateTimerDisp(); if(d.active && !timerInt) startTimerLocal(); else if(!d.active && timerInt){clearInterval(timerInt); timerInt=null;} }
         if(d.type==='go-to-vote') { triggerVoteScreen(); }
-        if(d.type==='submit-vote' && isHost){ votes[c.peer]={choice:d.choice, achieved:d.achieved}; updateOnlineVoteStatus(); }
+        if(d.type==='submit-vote' && isHost){ votes[d.id]={choice:d.choice, achieved:d.achieved}; updateOnlineVoteStatus(); }
         if(d.type==='final-result') displayResult(d);
         if(d.type==='back-to-setup') { gameStarted = false; pushHistoryState('screen-lobby', 'waiting'); restoreState({ screen: 'screen-lobby', lobby: 'waiting' }); }
     }
@@ -431,9 +394,8 @@
     }
 
     function hostStartGame(){
-        gameStarted = true;
-        wwTarget = ""; tempTarget = ""; wwTargetList =[]; readyCount = 0; votes = {};
-        timeLeft = 300; updateTimerDisp(); // タイマーの完全初期化
+        gameStarted = true; 
+        wwTarget = ""; tempTarget = ""; wwTargetList =[]; readyCount = 0; votes = {}; timeLeft = 300; updateTimerDisp();
 
         let rolePool =[];
         for(let i=0; i<roleCounts.ww; i++) rolePool.push("人狼");
@@ -476,8 +438,7 @@
         
         document.getElementById('ww-choice').style.display = 'none';
         document.getElementById('reveal-done-btn').style.display = 'block';
-        tempTarget = "";
-        document.getElementById('target-A').className = 'btn-outline'; document.getElementById('target-B').className = 'btn-outline';
+        tempTarget = ""; document.getElementById('target-A').className = 'btn-outline'; document.getElementById('target-B').className = 'btn-outline';
 
         let partnerText = "";
         if (myRoleData.role === '人狼') {
@@ -511,15 +472,21 @@
     function playerReady(){
         if(isOnline){ 
             document.getElementById('reveal-done-btn').style.display='none'; document.getElementById('ready-wait-msg').style.display='block';
-            if(isHost){ if(myRoleData.role==='人狼' && tempTarget) wwTargetList.push(tempTarget); readyCount++; checkAllReady(); } 
-            else { if(myRoleData.role==='人狼' && tempTarget) conn.send({type:'ww-choice', target:tempTarget}); conn.send({type:'player-ready'}); } 
+            if(isHost){ 
+                if(myRoleData.role==='人狼' && tempTarget) wwTargetList.push(tempTarget);
+                readyCount++; checkAllReady(); 
+            } else { 
+                if(myRoleData.role==='人狼' && tempTarget) broadcast({type:'ww-choice', target:tempTarget}); 
+                broadcast({type:'player-ready'}); 
+            } 
         } else { 
             if(myRoleData.role==='人狼' && tempTarget) wwTargetList.push(tempTarget);
             offlineStep++; 
             if(offlineStep < players.length){ triggerHandover(players[offlineStep].name, prepareOfflineIdentity, "次へ", (offlineRound === 1 ? "1周目：役職確認" : "2周目：詳細確認")); }
             else { 
                 if(offlineRound === 1) { 
-                    if(wwTargetList.length > 0) wwTarget = wwTargetList[Math.floor(Math.random() * wwTargetList.length)]; else wwTarget = Math.random() < 0.5 ? 'A' : 'B';
+                    if(wwTargetList.length > 0) wwTarget = wwTargetList[Math.floor(Math.random() * wwTargetList.length)];
+                    else wwTarget = Math.random() < 0.5 ? 'A' : 'B';
                     offlineRound = 2; offlineStep = 0; triggerHandover(players[0].name, prepareOfflineIdentity, "詳細確認へ", "2周目：詳細確認"); 
                 } 
                 else { startDiscussion(); } 
@@ -529,14 +496,16 @@
 
     function checkAllReady(){ 
         if(readyCount===players.length){ 
-            if(wwTargetList.length > 0) wwTarget = wwTargetList[Math.floor(Math.random() * wwTargetList.length)]; else wwTarget = Math.random() < 0.5 ? 'A' : 'B';
+            if(wwTargetList.length > 0) wwTarget = wwTargetList[Math.floor(Math.random() * wwTargetList.length)];
+            else wwTarget = Math.random() < 0.5 ? 'A' : 'B';
             broadcast({type:'start-discussion', target:wwTarget}); startDiscussion(); 
         }
     }
     
     function startDiscussion(){ 
         show('screen-discussion'); 
-        let info = document.getElementById('special-info'); info.style.display = "none"; 
+        let info = document.getElementById('special-info');
+        info.style.display = "none"; 
         if(isOnline) {
             if(myRoleData.role==='占い師' || myRoleData.role==='囚人' || myRoleData.role==='狂人' || myRoleData.role==='人狼'){
                 info.style.display = "block";
@@ -545,8 +514,8 @@
                 else if(myRoleData.role==='狂人' || myRoleData.role==='人狼') { let pText = myRoleData.partners && myRoleData.partners.length > 0 ? ("<br><span style='font-size:0.8rem; color:#ff7675;'>仲間: " + myRoleData.partners.join('、') + "</span>") : ""; info.innerHTML="決定ターゲット: <b class='color-人狼'>"+wwTarget+"</b>" + pText; }
             }
         }
-        if(!isOnline || isHost){ document.getElementById('timer-controls').style.display='block'; if(!timerInt) toggleTimer(); } 
-        else { document.getElementById('timer-controls').style.display='none'; }
+        if(isOnline && isHost){ document.getElementById('host-controls').style.display='block'; if(!timerInt) toggleTimer(); } 
+        else if(!isOnline) { document.getElementById('off-controls').style.display='block'; if(!timerInt) startTimerLocal(); } 
     }
     
     function startTimerLocal(){ timerInt=setInterval(()=>{if(timeLeft>0){timeLeft--;updateTimerDisp();}},1000); }
@@ -560,12 +529,9 @@
         show('screen-vote'); tempVoteChoice = ""; 
         const isP = (myRoleData.role === '囚人'); 
         document.getElementById('shackle-confirm-step').style.display = isP ? 'block' : 'none'; 
-        
-        // 確実なUIリセット
         document.getElementById('vote-action-area').style.display = 'block';
         document.getElementById('opening-msg').style.display = 'none';
         document.getElementById('vote-status-text').innerText = "";
-        
         document.getElementById('vbtn-A').disabled = isP; document.getElementById('vbtn-B').disabled = isP; 
         document.getElementById('vbtn-A').className = "btn-outline"; document.getElementById('vbtn-B').className = "btn-outline"; 
         document.getElementById('vbtn-confirm').style.display = 'none'; 
@@ -578,7 +544,7 @@
         if(isOnline){ 
             document.getElementById('vote-action-area').style.display='none'; 
             if(isHost){ votes[myId] = { choice: tempVoteChoice, achieved: shackleAchieved }; updateOnlineVoteStatus(); } 
-            else { conn.send({type:'submit-vote', choice: tempVoteChoice, achieved: shackleAchieved}); document.getElementById('vote-status-text').innerText = "集計中..."; } 
+            else { broadcast({type:'submit-vote', id:myId, choice: tempVoteChoice, achieved: shackleAchieved}); document.getElementById('vote-status-text').innerText = "集計中..."; } 
         } else { 
             votes[players[offlineVoteStep].id] = { choice: tempVoteChoice, achieved: shackleAchieved }; 
             offlineVoteStep++; 
