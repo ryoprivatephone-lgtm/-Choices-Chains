@@ -1,84 +1,27 @@
 <!DOCTYPE html>
 <html lang="ja">
-    <head>
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>誘惑と鉄鎖 - Ver.33 (通信強化版)</title>
-
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
-    <meta name="theme-color" content="#000000">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>誘惑と鉄鎖 - Ver.34</title>
+    <!-- Wi-Fiブロックを回避するIoT向け軽量通信ライブラリ (Paho MQTT) を採用 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
-    
     <style>
-        :root { 
-            --bg-color:#050505; 
-            --card-bg:rgba(20,20,20,0.95); 
-            --neon-red:#ff1a1a; 
-            --accent-red:#8e0000; 
-            --accent-blue:#45aaf2; 
-            --accent-gold:#f1c40f; 
-            --accent-purple:#a55eea; 
-            --accent-orange:#e67e22; 
-            --text-color:#e0e0e0; 
-        }
-
+        :root { --bg-color:#050505; --card-bg:rgba(20,20,20,0.95); --neon-red:#ff1a1a; --accent-red:#8e0000; --accent-blue:#45aaf2; --accent-gold:#f1c40f; --accent-purple:#a55eea; --accent-orange:#e67e22; --text-color:#e0e0e0; }
         * { touch-action:manipulation; box-sizing:border-box; outline:none; }
-
-        /* 全体背景：端を完全な黒(#000000)に固定してステータスバーと一体化 */
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden; 
-            background: #000000; 
-            font-family: 'Noto Sans JP', sans-serif; 
-            color: var(--text-color); 
-            transition: background 1.5s ease; 
-        }
-
-        body.citizen-win-bg { 
-            background: radial-gradient(circle at center, #0a1f3d 0%, #000000 100%); 
-        }
-
-        /* dvhを使用してiPhoneのメニューバー等の干渉を防ぐ */
-        .viewport { 
-            width: 100%; height: 100dvh; 
-            display: flex; justify-content: center; align-items: center; 
-            position: relative; overflow: hidden; 
-            background: radial-gradient(circle at center, #1a0505 0%, #000000 100%);
-        }
-
-        .screen { 
-            position: absolute; width: 94%; max-width: 440px; 
-            opacity: 0; visibility: hidden; 
-            transform: translateY(15px); transition: 0.3s ease; 
-            text-align: center; z-index: 1; 
-            overflow-y: auto; max-height: 98dvh; padding: 10px; 
-        }
-
-        .screen.active { 
-            opacity: 1; visibility: visible; 
-            transform: translateY(0); z-index: 10; 
-        }
+        body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:radial-gradient(circle at center, #1a0505 0%, #050505 100%); font-family:'Noto Sans JP', sans-serif; color:var(--text-color); transition: background 1.5s ease; }
+        body.citizen-win-bg { background: radial-gradient(circle at center, #0a1f3d 0%, #050505 100%); }
+        .viewport { width:100%; height:100dvh; display:flex; justify-content:center; align-items:center; position:relative; overflow:hidden; }
+        .screen { position:absolute; width:94%; max-width:440px; opacity:0; visibility:hidden; transform:translateY(15px); transition:0.3s ease; text-align:center; z-index:1; overflow-y: auto; max-height: 98dvh; padding: 10px; }
+        .screen.active { opacity:1; visibility:visible; transform:translateY(0); z-index:10; }
         
-        h1 { 
-            font-family: 'Cinzel', serif; font-size: 1.6rem; 
-            letter-spacing: 4px; color: var(--neon-red); 
-            text-shadow: 0 0 15px rgba(255, 26, 26, 0.6); margin: 0 0 10px; 
-        }
-
-        .card { 
-            background: var(--card-bg); border: 1px solid #301010; 
-            border-radius: 20px; padding: 15px; 
-            box-shadow: 0 0 30px rgba(0,0,0,1); position: relative; 
-        }
+        h1 { font-family:'Cinzel', serif; font-size:1.6rem; letter-spacing:4px; color:var(--neon-red); text-shadow:0 0 15px rgba(255, 26, 26, 0.6); margin: 0 0 10px; }
+        .card { background:var(--card-bg); border:1px solid #301010; border-radius:20px; padding:15px; box-shadow: 0 0 30px rgba(0,0,0,1); position:relative; }
 
         .giant-selector { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 20px 0; }
         .btn-giant { width: 75px; height: 75px; border-radius: 50%; font-size: 2.2rem; background: #222; color: #fff; border: 3px solid var(--accent-gold); cursor: pointer; }
-        .btn-giant:active { background: #444; transform: scale(0.9); }
+        .btn-giant:active { background: #444; }
         .display-giant { font-size: 4rem; font-family: 'Cinzel', serif; color: var(--accent-gold); min-width: 60px; text-shadow: 0 0 20px var(--accent-gold); }
 
         .role-step-container { margin: 12px 0; border-bottom: 1px solid #222; padding-bottom: 12px; }
@@ -107,7 +50,7 @@
         .color-富豪 { color: var(--accent-gold) !important; text-shadow: 0 0 10px var(--accent-gold); }
         .color-市民勝利 { color: var(--accent-gold) !important; text-shadow: 0 0 20px var(--accent-gold); font-size: 2.2rem; }
         #timer-display { font-size:4.5rem; font-family:'Cinzel', serif; margin:10px 0; color:#fff; }
-        #status-bar { position:fixed; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.9); font-size:11px; padding:5px; color:#666; text-align:center; z-index:999; }
+        #status-bar { position:fixed; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.9); font-size:11px; padding:5px; color:#666; text-align:center; z-index:999; border-top:1px solid #222; }
     </style>
 </head>
 <body>
@@ -118,17 +61,17 @@
         <h1>誘惑と鉄鎖</h1>
         <div class="card">
             <div id="initial-setup">
-                <input type="text" id="user-name" placeholder="あなたの名前">
-                <button class="btn-primary" id="host-init-btn" onclick="initHost()">部屋を作る</button>
-                <button class="btn-outline" onclick="startOfflineSetup()">対面でプレイ</button>
+                <input type="text" id="user-name" placeholder="プレイヤー名">
+                <button class="btn-primary" id="host-init-btn" onclick="initHost()">部屋を作る（オンライン）</button>
+                <button class="btn-outline" onclick="startOfflineSetup()">対面でプレイ（オフライン）</button>
                 <div style="margin:15px 0; border-top:1px solid #331111;"></div>
                 <input type="text" id="room-id-input" placeholder="Room ID (数字4桁)">
                 <button id="join-init-btn" class="btn-outline" onclick="initGuest()">部屋に参加</button>
             </div>
             <div id="lobby-waiting" style="display:none;">
                 <p id="display-id" style="color:var(--neon-red); font-weight:bold; font-size: 1.5rem; letter-spacing: 2px;"></p>
-                <p style="font-size: 0.8rem; color: #888;">このIDを友達に教えてください</p>
-                <div id="member-list" style="text-align:left; font-size:0.9rem; margin:15px 0; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px;"></div>
+                <p style="font-size: 0.8rem; color: #888;">このIDを仲間に教えてください</p>
+                <div id="member-list" style="text-align:left; font-size:0.9rem; margin:15px 0; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px;"></div>
                 <button id="host-go-to-config" class="btn-primary" style="display:none;" onclick="showRoleConfig()">役職設定へ進む</button>
                 <p id="guest-waiting-msg" style="display:none; font-size:0.8rem; color:var(--accent-gold);">ホストの操作を待っています...</p>
             </div>
@@ -153,7 +96,7 @@
         </div>
     </div>
 
-    <!-- 3. 役職設定 -->
+    <!-- 3. 役職設定 (共通) -->
     <div id="screen-role-config" class="screen">
         <h1>Role Settings</h1>
         <div class="card">
@@ -180,7 +123,7 @@
             <div class="villager-banner">
                 <span class="v-label">村人 (残り)</span><div class="v-count" id="display-villager-count">0</div>
             </div>
-            <textarea id="global-shackles" rows="2" style="margin-top:15px;" placeholder="囚人の枷（改行区切り）">相手に3回以上反論する
+            <textarea id="global-shackles" rows="2" style="margin-top:15px;" placeholder="囚人の枷（改行区切り）" oninput="syncConfig()">相手に3回以上反論する
 特定のワードを5回言う</textarea>
             
             <div class="btn-flex" id="host-config-btns">
@@ -234,6 +177,7 @@
             <div id="timer-display">05:00</div>
             <div class="btn-flex"><button class="btn-outline" onclick="adjustTime(60)">+1:00</button><button class="btn-outline" onclick="adjustTime(-60)">-1:00</button></div>
             <div id="special-info" style="display:none; margin:10px 0; padding:12px; border:1px dashed #442222; border-radius:10px; font-size:0.9rem;"></div>
+            
             <div id="host-controls" style="display:none; margin-top:20px;">
                 <button id="timer-btn" class="btn-primary" onclick="toggleTimer()">一時停止</button>
                 <button class="btn-outline" onclick="hostGoToVote()">投票へ進む</button>
@@ -268,6 +212,7 @@
     <div id="screen-result" class="screen">
         <h1 id="result-winner" style="font-size: 2.2rem;"></h1>
         <div class="card" id="final-card">
+            <div class="shine-effect"></div>
             <div id="result-text" style="font-size:1.2rem;"></div>
             <div id="shackle-msg" style="font-weight:bold; margin:10px 0;"></div>
             <hr style="border:0.5px solid #331111; margin:15px 0;">
@@ -277,17 +222,18 @@
     </div>
 </div>
 
-<div id="status-bar">通信準備中...</div>
+<div id="status-bar">準備完了 (Wi-Fiブロック回避版)</div>
 
 <script>
-    // --- WebSocket 通信 (PieSocket API) ---
-    // ※これは無料の公開WebSocketキーです。API制限回避のため、通信基盤をP2Pから切り替えました。
-    const PIESOCKET_API_KEY = "VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV";
-    let channel = null;
+    // ==========================================
+    // 通信エンジンの完全刷新 (Paho MQTT WebSockets)
+    // ==========================================
+    let mqttClient = null;
+    let roomTopic = "";
 
     let isOnline=false, isHost=false, totalPlayers = 4;
     let roleCounts = { ww: 1, mad: 0, seer: 1, prisoner: 1, billionaire: 1 };
-    let myId="", roomId="", myName="", players=[], lastRoleMap={};
+    let myId="", myName="", players=[], lastRoleMap={};
     let myRoleData={}, wwTarget="", readyCount=0, votes={}, timerInt=null, timeLeft=300;
     let shackleAchieved = true, shackleConfirmed = true, offlineRound = 1, offlineStep = 0, offlineVoteStep = 0;
     let tempVoteChoice = "", tempTarget = "", wwTargetList =[]; 
@@ -295,7 +241,6 @@
 
     const icons = { "人狼":"😈", "狂人":"🤡", "占い師":"🔮", "囚人":"⛓️", "富豪":"👑", "村人":"👨‍🌾" };
 
-    // --- ブラウザバック制御 ---
     window.onpopstate = (event) => {
         if (gameStarted) { history.pushState(null, '', ''); return; }
         if (event.state) restoreState(event.state); else restoreState({ screen: 'screen-lobby', lobby: 'initial' });
@@ -338,81 +283,127 @@
     function log(m){ document.getElementById('status-bar').innerText = m; }
 
     window.onload = () => { 
-        loadSettings();
-        // ランダムなIDを生成
-        myId = Math.random().toString(36).substring(2, 8); 
-        log("待機中");
+        loadSettings(); 
+        myId = "user_" + Math.random().toString(36).substring(2, 10); // 一意のID
         history.replaceState({ screen: 'screen-lobby', lobby: 'initial' }, '', '');
     };
 
     function loadSettings() {
         document.getElementById('user-name').value = localStorage.getItem('cc_u') || "";
-        document.getElementById('global-shackles').value = localStorage.getItem('cc_sOn') || "相手に3回以上反論する\n特定のワードを5回言う";
+        document.getElementById('global-shackles').value = localStorage.getItem('cc_sOn') || "相手に3回以上反論する\n特定のワードを5回言う\n語尾に「にゃん」を付ける";
         updateOfflineNameInputs();
     }
 
-    // --- 人数設定 ---
+    // --- MQTT通信の初期化 ---
+    function initConnection(rId, hosting) {
+        log("通信サーバーに接続中...");
+        
+        // MQTT公開ブローカー（ポート8084はWSS対応でWi-Fi回避率高）
+        mqttClient = new Paho.MQTT.Client("broker.emqx.io", 8084, "/mqtt", myId);
+        
+        mqttClient.onConnectionLost = (resp) => {
+            if (resp.errorCode !== 0) { alert("通信が切断されました: " + resp.errorMessage); resetButtons(); }
+        };
+        
+        mqttClient.onMessageArrived = (msg) => {
+            try {
+                let data = JSON.parse(msg.payloadString);
+                if (data.senderId !== myId) handleData(data); // 自分が送ったものは処理しない
+            } catch(e) {}
+        };
+
+        roomTopic = "choices-chains-v34-room-" + rId;
+
+        mqttClient.connect({
+            useSSL: true,
+            timeout: 5,
+            onSuccess: () => {
+                log("サーバー接続成功！");
+                mqttClient.subscribe(roomTopic);
+                
+                isOnline = true;
+                if(hosting) {
+                    isHost = true; players = [{id:myId, name:myName}]; 
+                    document.getElementById('initial-setup').style.display='none'; 
+                    document.getElementById('lobby-waiting').style.display='block'; 
+                    document.getElementById('display-id').innerText="ROOM ID: " + rId; 
+                    updateLobbyUI(); 
+                    pushHistoryState('screen-lobby', 'waiting'); restoreState({ screen: 'screen-lobby', lobby: 'waiting' });
+                } else {
+                    isHost = false; 
+                    broadcast({type:'join', id:myId, name:myName});
+                    document.getElementById('initial-setup').style.display='none'; 
+                    document.getElementById('lobby-waiting').style.display='block'; 
+                    document.getElementById('display-id').innerText="ID: " + rId; 
+                    pushHistoryState('screen-lobby', 'waiting'); restoreState({ screen: 'screen-lobby', lobby: 'waiting' });
+                }
+                resetButtons();
+            },
+            onFailure: (err) => {
+                alert("サーバーに接続できませんでした。\nWi-Fiが通信をブロックしている可能性があります。4G/5Gに切り替えてください。");
+                log("接続失敗");
+                resetButtons();
+            }
+        });
+    }
+
+    function resetButtons() {
+        document.getElementById('host-init-btn').innerText = "部屋を作る"; document.getElementById('host-init-btn').disabled = false;
+        document.getElementById('join-init-btn').innerText = "部屋に参加"; document.getElementById('join-init-btn').disabled = false;
+    }
+
+    function broadcast(d) {
+        if(mqttClient && mqttClient.isConnected()) {
+            d.senderId = myId; // 送信元を特定
+            let message = new Paho.MQTT.Message(JSON.stringify(d));
+            message.destinationName = roomTopic;
+            mqttClient.send(message);
+        }
+    }
+
     function adjustTotalPlayers(v) { totalPlayers = Math.max(3, Math.min(10, totalPlayers + v)); document.getElementById('giant-count-display').innerText = totalPlayers; updateOfflineNameInputs(); updateVillagerCount(); }
     function updateOfflineNameInputs() { const container = document.getElementById('off-name-container'); container.innerHTML = ""; for(let i=1; i<=totalPlayers; i++) { let saved = localStorage.getItem('cc_o'+i) || "プレイヤー"+i; container.innerHTML += `<input type="text" id="off-p${i}" value="${saved}" oninput="localStorage.setItem('cc_o${i}', this.value)">`; } }
+    
     function changeRoleCount(key, v) { roleCounts[key] = Math.max(0, roleCounts[key] + v); if(key === 'ww' && roleCounts[key] < 1) roleCounts[key] = 1; document.getElementById('val-'+key).innerText = roleCounts[key]; updateVillagerCount(); }
+
     function updateVillagerCount() {
         let max = isOnline ? (players.length || 1) : totalPlayers;
         let setRoles = Object.values(roleCounts).reduce((a,b)=>a+b, 0);
         let villagers = max - setRoles;
         const vDisplay = document.getElementById('display-villager-count');
         const startBtn = document.getElementById('final-start-btn');
-        if(villagers < 0 && (!isOnline || isHost)) { vDisplay.innerText = villagers; vDisplay.style.color = "var(--neon-red)"; startBtn.disabled = true; startBtn.innerText = "役職オーバー"; } 
-        else { vDisplay.innerText = villagers; vDisplay.style.color = "#fff"; startBtn.disabled = false; startBtn.innerText = "役職確認へ進む"; }
+        
+        if(villagers < 0 && (!isOnline || isHost)) {
+            vDisplay.innerText = villagers; vDisplay.style.color = "var(--neon-red)";
+            startBtn.disabled = true; startBtn.innerText = "役職オーバー";
+        } else {
+            vDisplay.innerText = villagers; vDisplay.style.color = "#fff";
+            startBtn.disabled = false; startBtn.innerText = "役職確認へ進む";
+        }
         if(isOnline && isHost) syncConfig();
     }
 
     function syncConfig() { if(!isHost || !isOnline) return; broadcast({ type: 'config-sync', roleCounts: roleCounts, shackles: document.getElementById('global-shackles').value, villagers: document.getElementById('display-villager-count').innerText }); }
     function startOfflineSetup() { isOnline = false; isHost = true; updateOfflineNameInputs(); pushHistoryState('screen-offline-setup'); restoreState({ screen: 'screen-offline-setup' }); }
 
-    // --- WebSocket 通信接続 ---
-    function initWebSocket(rId, isHosting) {
-        log("サーバーに接続中...");
-        const piesocket = new PieSocket.default({ clusterId: "free.piesocket.com", apiKey: PIESOCKET_API_KEY });
-        piesocket.subscribe(rId).then(ch => {
-            channel = ch;
-            log("接続成功");
-            channel.listen('system', (data, meta) => { handleData(data); });
-            if(isHosting) {
-                isOnline = true; isHost = true; roomId = rId; players = [{id:myId, name:myName}]; 
-                document.getElementById('initial-setup').style.display='none'; document.getElementById('lobby-waiting').style.display='block'; document.getElementById('display-id').innerText="ROOM ID: " + roomId; 
-                updateLobbyUI(); pushHistoryState('screen-lobby', 'waiting'); restoreState({ screen: 'screen-lobby', lobby: 'waiting' });
-            } else {
-                isOnline = true; isHost = false; roomId = rId;
-                broadcast({type:'join', id:myId, name:myName});
-                document.getElementById('initial-setup').style.display='none'; document.getElementById('lobby-waiting').style.display='block'; document.getElementById('display-id').innerText="ROOM ID: " + roomId; 
-                pushHistoryState('screen-lobby', 'waiting'); restoreState({ screen: 'screen-lobby', lobby: 'waiting' });
-            }
-        }).catch(err => {
-            alert("通信エラー: " + err); log("接続失敗");
-            document.getElementById('host-init-btn').innerText = "部屋を作る"; document.getElementById('join-init-btn').innerText = "部屋に参加";
-        });
-    }
-
     function initHost(){ 
-        myName = document.getElementById('user-name').value; if(!myName) return alert("名前を入力してください"); 
-        localStorage.setItem('cc_u', myName); 
-        document.getElementById('host-init-btn').innerText = "接続中...";
-        let newRoomId = Math.floor(1000 + Math.random() * 9000).toString(); // 4桁のわかりやすい数字ID
-        initWebSocket("room_" + newRoomId, true);
+        myName = document.getElementById('user-name').value; if(!myName) return alert("名前を入力してください"); localStorage.setItem('cc_u', myName); 
+        document.getElementById('host-init-btn').innerText = "接続中..."; document.getElementById('host-init-btn').disabled = true;
+        let newRoomId = Math.floor(1000 + Math.random() * 9000).toString();
+        initConnection(newRoomId, true); 
     }
     
     function initGuest(){ 
-        myName = document.getElementById('user-name').value; let rid = document.getElementById('room-id-input').value.trim(); 
-        if(!myName || !rid) return alert("名前とIDを入力してください"); localStorage.setItem('cc_u', myName); 
-        document.getElementById('join-init-btn').innerText = "接続中...";
-        initWebSocket("room_" + rid, false);
+        myName = document.getElementById('user-name').value; let rid = document.getElementById('room-id-input').value.trim(); if(!myName || !rid) return alert("名前とIDを入力してください"); localStorage.setItem('cc_u', myName); 
+        document.getElementById('join-init-btn').innerText = "接続中..."; document.getElementById('join-init-btn').disabled = true;
+        initConnection(rid, false); 
     }
 
     function updateLobbyUI(){ 
         document.getElementById('member-list').innerHTML=players.map(p=>"・"+p.name).join("<br>"); 
         if(isHost){ document.getElementById('host-go-to-config').style.display = (players.length>=2) ? 'block' : 'none'; broadcast({type:'lobby', players}); } 
     }
-    function broadcast(d){ if(channel) channel.publish('system', d); }
+
     function showRoleConfig() { if(isOnline && isHost) broadcast({type:'show-config'}); pushHistoryState('screen-role-config'); restoreState({ screen: 'screen-role-config' }); }
 
     function handleData(d){
@@ -636,7 +627,7 @@
         document.getElementById('shackle-msg').style.color = d.sSuccess ? "var(--accent-blue)" : "var(--accent-red)"; 
         document.getElementById('result-text').innerHTML="回答: <b>"+d.finalAns+"</b> (A:"+d.scoreA+" / B:"+d.scoreB+")<br>人狼の狙い: <b>"+d.wwTarget+"</b>"; 
         document.getElementById('result-roles').innerHTML=d.players.map(p=>`<div>${p.name}: <span class='color-${d.roleMap[p.id].role}'>${d.roleMap[p.id].role}</span> (${d.votes[p.id].choice})</div>`).join(""); 
-        rb.style.display = isHost ? "block" : "none"; 
+        rb.style.display = (!isOnline || isHost) ? "block" : "none"; 
         document.querySelector('#screen-confirm .btn-primary').onclick = showRole; // リセット
     }
 
