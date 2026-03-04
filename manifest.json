@@ -1,6 +1,6 @@
 {
-  "name": "誘惑と鉄鎖",
-  "short_name": "誘惑と鉄鎖",
+  "name": "FALSE DILEMMA",
+  "short_name": "FALSE DILEMMA",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#000000",
@@ -20,6 +20,7 @@
     }
   ]
 }
+
 
 
 
