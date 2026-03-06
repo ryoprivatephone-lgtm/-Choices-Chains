@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>誘惑と鉄鎖 - Global Edition</title>
+    <title>FALSE DILEMMA - Ver.39</title>
 
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
@@ -13,10 +13,10 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
-
+    
     <style>
         :root { 
-            --bg-color:#050505; 
+            --bg-color:#000000; 
             --card-bg:rgba(20,20,20,0.95); 
             --neon-red:#ff1a1a; 
             --accent-red:#8e0000; 
@@ -29,21 +29,15 @@
 
         * { touch-action:manipulation; box-sizing:border-box; outline:none; }
 
-        /* 全体背景：端を完全な黒(#000000)にしてデバイスのベゼルと一体化 */
+        /* 背景を完全な黒に固定してアプリの一体感を出す */
         body, html { 
             margin:0; padding:0; width:100%; height:100%; 
-            overflow:hidden; 
-            background:#000000; 
+            overflow:hidden; background:#000000; 
             font-family:'Noto Sans JP', sans-serif; 
             color:var(--text-color); 
-            transition: background 1.5s ease; 
         }
 
-        body.citizen-win-bg { 
-            background: radial-gradient(circle at center, #0a1f3d 0%, #000000 100%); 
-        }
-
-        /* ビューポート：dvhを使用してSafariのバー等のズレを防止 */
+        /* ビューポート：dvhとグラデーションで没入感を維持 */
         .viewport { 
             width:100%; height:100dvh; 
             display:flex; justify-content:center; align-items:center; 
@@ -51,61 +45,26 @@
             background: radial-gradient(circle at center, #1a0505 0%, #000000 100%);
         }
 
-        .screen { 
-            position:absolute; width:94%; max-width:440px; 
-            opacity:0; visibility:hidden; 
-            transform:translateY(15px); transition:0.3s ease; 
-            text-align:center; z-index:1; 
-            overflow-y: auto; max-height: 98dvh; padding: 10px; 
+        body.citizen-win-bg .viewport { 
+            background: radial-gradient(circle at center, #0a1f3d 0%, #000000 100%); 
         }
 
-        .screen.active { 
-            opacity:1; visibility:visible; 
-            transform:translateY(0); z-index:10; 
+        .screen { 
+            position:absolute; width:94%; max-width:440px; 
+            opacity:0; visibility:hidden; transform:translateY(15px); 
+            transition:0.3s ease; text-align:center; z-index:1; 
+            overflow-y: auto; max-height: 98dvh; padding: 10px; 
         }
         
-        /* 言語選択セレクター */
+        .screen.active { opacity:1; visibility:visible; transform:translateY(0); z-index:10; }
+        
         .lang-selector { position: absolute; top: 15px; left: 15px; z-index: 9999; background: rgba(0,0,0,0.7); border: 1px solid #555; color: #fff; padding: 6px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
         
         h1 { font-family:'Cinzel', serif; font-size:1.6rem; letter-spacing:4px; color:var(--neon-red); text-shadow:0 0 15px rgba(255, 26, 26, 0.6); margin: 0 0 10px; }
-        .card { background:var(--card-bg); border:1px solid #301010; border-radius:20px; padding:15px; box-shadow: 0 0 30px rgba(0,0,0,1); position:relative; }
-        .giant-selector { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 20px 0; }
-        .btn-giant { width: 75px; height: 75px; border-radius: 50%; font-size: 2.2rem; background: #222; color: #fff; border: 3px solid var(--accent-gold); cursor: pointer; }
-        .btn-giant:active { background: #444; }
-        .display-giant { font-size: 4rem; font-family: 'Cinzel', serif; color: var(--accent-gold); min-width: 60px; text-shadow: 0 0 20px var(--accent-gold); }
-        .role-step-container { margin: 12px 0; border-bottom: 1px solid #222; padding-bottom: 12px; }
-        .role-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 5px; font-size: 1.1rem; }
-        .stepper { display: flex; justify-content: center; align-items: center; gap: 35px; margin-top: 5px; }
-        .btn-step { width: 60px; height: 60px; border-radius: 15px; border: 1px solid #666; background: #1a1a1a; color: #fff; font-size: 2rem; cursor: pointer; }
-        .val-step { font-size: 2.5rem; font-family: 'Cinzel', serif; min-width: 50px; color: var(--accent-blue); }
-        .villager-banner { background: rgba(255,255,255,0.08); border: 2px dashed #666; border-radius: 15px; padding: 15px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .v-label { font-size: 1.1rem; color: #fff; }
-        .v-count { font-size: 2.5rem; font-family: 'Cinzel', serif; color: #fff; }
-
-        input, textarea { width:100%; background:#111; border:1px solid #442222; color:white; padding:12px; margin-bottom:8px; border-radius:8px; font-size:16px; transition: 0.3s; }
-        textarea[readonly] { background: #222; color: #888; border-color: #333; }
-        button { width:100%; padding:14px; border-radius:10px; border:none; cursor:pointer; font-weight:bold; margin-top:8px; transition:0.2s; font-size:1rem; }
-        button:disabled { background:#222 !important; color:#555 !important; cursor:not-allowed; opacity:1; }
-        .btn-primary { background:var(--accent-red); color:#fff; }
-        .btn-outline { background:transparent; border: 1px solid #553333; color: #aaa; }
-        .btn-flex { display:flex; gap:10px; } .btn-flex button { flex:1; }
-        
-        .color-人狼 { color: var(--neon-red) !important; text-shadow: 0 0 10px var(--neon-red); }
-        .color-狂人 { color: var(--accent-orange) !important; text-shadow: 0 0 10px var(--accent-orange); }
-        .color-占い師 { color: var(--accent-purple) !important; text-shadow: 0 0 10px var(--accent-purple); }
-        .color-囚人 { color: var(--accent-blue) !important; text-shadow: 0 0 10px var(--accent-blue); }
-        .color-富豪 { color: var(--accent-gold) !important; text-shadow: 0 0 10px var(--accent-gold); }
-        .color-村人 { color: #fff !important; }
-        
-        .timer-display { font-size:4.5rem; font-family:'Cinzel', serif; margin:10px 0; color:#fff; }
-        #status-bar { position:fixed; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.9); font-size:11px; padding:5px; color:#666; text-align:center; z-index:999; border-top:1px solid #222; }
-        .silence-btn { display: block; margin-bottom: 8px; font-size: 1.1rem; }
-        .silence-btn.active { background: var(--accent-red); color: #fff; border-color: var(--accent-red); }
-    </style>
+        .card { background:var(--card-bg); border:1px solid #301010; border-radius:20px; padding:15px; box-shadow: 0 0 30px rgba(0,0,0,1); position:relative; }    </style>
 </head>
 <body>
 
-<!-- 言語切り替えUI -->
 <select id="lang-select" class="lang-selector" onchange="changeLang(this.value)">
     <option value="ja">🌐 日本語</option>
     <option value="en">🌐 English</option>
@@ -122,7 +81,7 @@
                 <button class="btn-primary" id="host-init-btn" onclick="initHost()" data-i18n="btn_create_room">部屋を作る</button>
                 <button class="btn-outline" onclick="startOfflineSetup()" data-i18n="btn_offline">対面でプレイ</button>
                 <div style="margin:15px 0; border-top:1px solid #331111;"></div>
-                <input type="text" id="room-id-input" placeholder="Room ID">
+                <input type="text" id="room-id-input" placeholder="Room ID (4桁)">
                 <button id="join-init-btn" class="btn-outline" onclick="initGuest()" data-i18n="btn_join_room">部屋に参加</button>
             </div>
             <div id="lobby-waiting" style="display:none;">
@@ -171,7 +130,7 @@
                 <button class="btn-outline" onclick="history.back()" data-i18n="btn_back">戻る</button>
                 <button class="btn-primary" id="final-start-btn" onclick="validateAndStart()" data-i18n="btn_go_reveal">役職確認へ</button>
             </div>
-            <p id="guest-config-wait-msg" style="display:none; font-size:0.8rem; color:var(--accent-gold); margin-top:15px;" data-i18n="msg_host_editing">ホストが設定を編集中です...</p>
+            <p id="guest-config-wait-msg" style="display:none; font-size:0.8rem; color:var(--accent-gold); margin-top:15px; font-weight:bold;" data-i18n="msg_host_editing">ホストが設定を編集中です...</p>
         </div>
     </div>
 
@@ -239,14 +198,22 @@
         </div>
     </div>
 
+    <!-- 2日目議論画面 (タイマー＆操作UIを1日目と同等に拡張) -->
     <div id="screen-discussion2" class="screen">
         <h1 data-i18n="title_disc2">最終弁論</h1>
         <div class="card">
             <h2 style="color:var(--neon-red); margin:0;" id="silenced-msg-box"></h2>
-            <p style="font-size: 0.8rem; color: #aaa; margin-top:5px;" data-i18n="msg_silenced_rule">※言葉を発してはいけません</p>
-            <div class="timer-display" id="timer-display2" style="font-size:5rem; color:var(--accent-gold);">00:30</div>
-            <p style="font-size: 0.8rem; color: #888;" data-i18n="msg_auto_vote">時間が来ると自動的に投票へ</p>
-            <button class="btn-outline" style="margin-top:15px;" onclick="hostGoToVote()" id="force-vote-btn" style="display:none;" data-i18n="btn_force_vote">すぐに投票へ</button>
+            <p style="font-size: 0.8rem; color: #aaa; margin-top:5px;" data-i18n="msg_silenced_rule">※剥奪されたプレイヤーは言葉を発してはいけません</p>
+            <div class="timer-display" id="timer-display2" style="font-size:5rem; color:var(--accent-gold);">02:00</div>
+            <div class="btn-flex"><button class="btn-outline" onclick="adjustTime(60)">+1:00</button><button class="btn-outline" onclick="adjustTime(-60)">-1:00</button></div>
+            
+            <div id="host-controls2" style="display:none; margin-top:20px;">
+                <button id="timer-btn2" class="btn-primary" onclick="toggleTimer()" data-i18n="btn_pause">一時停止</button>
+                <button class="btn-outline" onclick="hostGoToVote()" data-i18n="btn_force_vote">投票へ進む</button>
+            </div>
+            <div id="off-controls2" style="display:none; margin-top:20px;">
+                <button class="btn-primary" onclick="hostGoToVote()" data-i18n="btn_force_vote">投票へ進む</button>
+            </div>
         </div>
     </div>
 
@@ -273,6 +240,7 @@
     <div id="screen-result" class="screen">
         <h1 id="result-winner" style="font-size: 2.2rem;"></h1>
         <div class="card" id="final-card">
+            <div class="shine-effect"></div>
             <div id="result-text" style="font-size:1.2rem;"></div>
             <div id="shackle-msg" style="font-weight:bold; margin:10px 0;"></div>
             <hr style="border:0.5px solid #331111; margin:15px 0;">
@@ -285,16 +253,15 @@
 <div id="status-bar">Initialize...</div>
 
 <script>
-    // --- 翻訳辞書データ ---
     const i18n = {
         ja: {
             app_title: "誘惑と鉄鎖", btn_create_room: "部屋を作る", btn_offline: "対面でプレイ", btn_join_room: "部屋に参加", lbl_tell_id: "このIDを仲間に教えてください", btn_go_config: "役職設定へ進む", msg_waiting_host: "ホストの設定を待っています...",
             title_player_count: "Player Count", lbl_how_many: "何人で儀式を行いますか？", btn_back: "戻る", btn_next_config: "次へ",
             title_role_settings: "Role Settings", role_ww: "人狼", role_mad: "狂人", role_seer: "占い師", role_pris: "囚人", role_bill: "富豪", role_vil: "村人 (残り)", btn_go_reveal: "役職確認へ", msg_host_editing: "ホストが設定を編集中です...",
             btn_start_action: "行動を始める", btn_yes_me: "はい、私です", btn_no_me: "いいえ", btn_done_check: "確認完了", msg_wait_others: "他の者の準備を待っています...",
-            title_disc1: "DISCUSSION (1日目)", btn_pause: "一時停止", btn_go_night: "1日目の夜へ進む",
+            title_disc1: "DISCUSSION (1日目)", btn_pause: "一時停止", btn_pause2: "再開", btn_go_night: "1日目の夜へ進む",
             title_night1: "1日目の夜", lbl_choose_silence: "発言権を剥奪する者を選べ", btn_submit: "決定する", msg_night_rest: "夜が更けました...<br>朝まで体を休めてください。", btn_rest: "体を休める", msg_wait_action: "待機中...",
-            title_disc2: "最終弁論", msg_silenced_rule: "※剥奪されたプレイヤーは言葉を発してはいけません", msg_auto_vote: "時間が来ると自動的に投票へ進みます", btn_force_vote: "すぐに投票へ",
+            title_disc2: "最終弁論", msg_silenced_rule: "※剥奪されたプレイヤーは言葉を発してはいけません", msg_auto_vote: "時間が来ると自動的に投票へ進みます", btn_force_vote: "投票へ進む",
             title_voting: "VOTING", lbl_shackle_done: "「枷」は達成できましたか？", btn_yes: "はい", btn_no: "いいえ", lbl_choose_final: "最終回答を選択してください", btn_confirm_ans: "この回答で決定する", msg_counting: "開票中...", btn_back_setup: "設定へ戻る",
             
             placeholder_name: "プレイヤー名", placeholder_room: "Room ID (4桁)", placeholder_shackle: "相手に3回以上反論する\n特定のワードを5回言う",
@@ -308,9 +275,9 @@
             title_player_count: "Player Count", lbl_how_many: "How many players?", btn_back: "Back", btn_next_config: "Next",
             title_role_settings: "Role Settings", role_ww: "Werewolf", role_mad: "Madman", role_seer: "Seer", role_pris: "Prisoner", role_bill: "Billionaire", role_vil: "Villager (Remain)", btn_go_reveal: "Confirm Roles", msg_host_editing: "Host is editing settings...",
             btn_start_action: "Start Action", btn_yes_me: "Yes, it's me", btn_no_me: "No", btn_done_check: "Confirm", msg_wait_others: "Waiting for others...",
-            title_disc1: "DISCUSSION (Day 1)", btn_pause: "Pause", btn_go_night: "Go to Night 1",
+            title_disc1: "DISCUSSION (Day 1)", btn_pause: "Pause", btn_pause2: "Resume", btn_go_night: "Go to Night 1",
             title_night1: "Night 1", lbl_choose_silence: "Choose someone to silence", btn_submit: "Submit", msg_night_rest: "Night has fallen...<br>Rest until morning.", btn_rest: "Rest", msg_wait_action: "Waiting...",
-            title_disc2: "Final Defense", msg_silenced_rule: "*Silenced players must not speak.", msg_auto_vote: "Auto-voting when time is up", btn_force_vote: "Vote Now",
+            title_disc2: "Final Defense", msg_silenced_rule: "*Silenced players must not speak.", msg_auto_vote: "Auto-voting when time is up", btn_force_vote: "Go to Vote",
             title_voting: "VOTING", lbl_shackle_done: "Did you achieve your Shackle?", btn_yes: "Yes", btn_no: "No", lbl_choose_final: "Select your final answer", btn_confirm_ans: "Confirm Answer", msg_counting: "Counting...", btn_back_setup: "Back to Setup",
             
             placeholder_name: "Player Name", placeholder_room: "Room ID", placeholder_shackle: "Rebut 3 times\nSay specific word 5 times",
@@ -324,9 +291,9 @@
             title_player_count: "Nombre de Joueurs", lbl_how_many: "Combien de joueurs ?", btn_back: "Retour", btn_next_config: "Suivant",
             title_role_settings: "Paramètres des Rôles", role_ww: "Loup-garou", role_mad: "Fou", role_seer: "Voyante", role_pris: "Prisonnier", role_bill: "Milliardaire", role_vil: "Villageois (Reste)", btn_go_reveal: "Confirmer Rôles", msg_host_editing: "L'hôte modifie les paramètres...",
             btn_start_action: "Commencer l'Action", btn_yes_me: "Oui, c'est moi", btn_no_me: "Non", btn_done_check: "Terminé", msg_wait_others: "En attente des autres...",
-            title_disc1: "DISCUSSION (Jour 1)", btn_pause: "Pause", btn_go_night: "Aller à la Nuit 1",
+            title_disc1: "DISCUSSION (Jour 1)", btn_pause: "Pause", btn_pause2: "Reprendre", btn_go_night: "Aller à la Nuit 1",
             title_night1: "Nuit 1", lbl_choose_silence: "Choisissez qui réduire au silence", btn_submit: "Soumettre", msg_night_rest: "La nuit est tombée...<br>Reposez-vous.", btn_rest: "Se reposer", msg_wait_action: "En attente...",
-            title_disc2: "Plaidoyer Final", msg_silenced_rule: "*Les joueurs réduits au silence ne doivent pas parler.", msg_auto_vote: "Passera automatiquement au vote.", btn_force_vote: "Voter Maintenant",
+            title_disc2: "Plaidoyer Final", msg_silenced_rule: "*Les joueurs réduits au silence ne doivent pas parler.", msg_auto_vote: "Passera automatiquement au vote.", btn_force_vote: "Aller au Vote",
             title_voting: "VOTE", lbl_shackle_done: "Avez-vous accompli vos Chaînes ?", btn_yes: "Oui", btn_no: "Non", lbl_choose_final: "Sélectionnez votre réponse", btn_confirm_ans: "Confirmer", msg_counting: "Dépouillement...", btn_back_setup: "Retour aux Paramètres",
             
             placeholder_name: "Nom du Joueur", placeholder_room: "ID du Salon", placeholder_shackle: "Réfuter 3 fois\nDire un mot spécifique 5 fois",
@@ -340,9 +307,9 @@
             title_player_count: "玩家人数", lbl_how_many: "多少人进行游戏？", btn_back: "返回", btn_next_config: "下一步",
             title_role_settings: "角色设置", role_ww: "狼人", role_mad: "狂人", role_seer: "预言家", role_pris: "囚犯", role_bill: "富豪", role_vil: "村民 (剩余)", btn_go_reveal: "确认角色", msg_host_editing: "房主正在编辑设置...",
             btn_start_action: "开始行动", btn_yes_me: "是的，是我", btn_no_me: "不是", btn_done_check: "确认完毕", msg_wait_others: "等待其他人准备...",
-            title_disc1: "讨论 (第1天)", btn_pause: "暂停", btn_go_night: "进入第一天夜晚",
+            title_disc1: "讨论 (第1天)", btn_pause: "暂停", btn_pause2: "继续", btn_go_night: "进入第一天夜晚",
             title_night1: "第一天夜晚", lbl_choose_silence: "选择剥夺发言权的玩家", btn_submit: "确定", msg_night_rest: "夜深了...<br>请休息到天亮。", btn_rest: "休息", msg_wait_action: "等待中...",
-            title_disc2: "最终辩论", msg_silenced_rule: "※被剥夺发言权的玩家禁止说话", msg_auto_vote: "时间到后将自动进入投票", btn_force_vote: "立即投票",
+            title_disc2: "最终辩论", msg_silenced_rule: "※被剥夺发言权的玩家禁止说话", msg_auto_vote: "时间到后将自动进入投票", btn_force_vote: "前往投票",
             title_voting: "投票", lbl_shackle_done: "你完成「枷锁」了吗？", btn_yes: "是", btn_no: "否", lbl_choose_final: "选择最终答案", btn_confirm_ans: "确认此答案", msg_counting: "计票中...", btn_back_setup: "返回设置",
             
             placeholder_name: "玩家名称", placeholder_room: "房间号", placeholder_shackle: "反驳3次\n说特定词5次",
@@ -355,24 +322,16 @@
 
     let currentLang = localStorage.getItem('cc_lang') || 'ja';
     function _(key) { return i18n[currentLang][key] || key; }
-
-    function changeLang(lang) {
-        currentLang = lang; localStorage.setItem('cc_lang', lang); applyLang();
-    }
-
+    function changeLang(lang) { currentLang = lang; localStorage.setItem('cc_lang', lang); applyLang(); }
     function applyLang() {
         document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = _(el.getAttribute('data-i18n')); });
         document.getElementById('user-name').placeholder = _('placeholder_name');
         document.getElementById('room-id-input').placeholder = _('placeholder_room');
-        
         let shackEl = document.getElementById('global-shackles');
-        if(shackEl.value.includes("反論する") || shackEl.value.includes("Rebut") || shackEl.value.includes("Réfuter") || shackEl.value.includes("反驳")) {
-            shackEl.value = _('placeholder_shackle');
-        }
+        if(shackEl.value.includes("反論する") || shackEl.value.includes("Rebut") || shackEl.value.includes("Réfuter") || shackEl.value.includes("反驳")) { shackEl.value = _('placeholder_shackle'); }
         document.getElementById('lang-select').value = currentLang;
         updateVillagerCount();
     }
-
     function getRoleName(r) {
         if(r==='人狼') return _('role_ww'); if(r==='狂人') return _('role_mad'); if(r==='占い師') return _('role_seer');
         if(r==='囚人') return _('role_pris'); if(r==='富豪') return _('role_bill'); if(r==='村人') return _('role_vil').split(' ')[0];
@@ -388,9 +347,7 @@
     const icons = { "人狼":"😈", "狂人":"🤡", "占い師":"🔮", "囚人":"⛓️", "富豪":"👑", "村人":"👨‍🌾" };
 
     window.onload = () => { 
-        applyLang();
-        document.getElementById('user-name').value = localStorage.getItem('cc_u') || "";
-        updateOfflineNameInputs();
+        applyLang(); document.getElementById('user-name').value = localStorage.getItem('cc_u') || ""; updateOfflineNameInputs();
         myId = "user_" + Math.random().toString(36).substring(2, 10);
         history.replaceState({ screen: 'screen-lobby', lobby: 'initial' }, '', '');
     };
@@ -399,7 +356,6 @@
         if (gameStarted) { history.pushState(null, '', ''); return; }
         if (event.state) restoreState(event.state); else restoreState({ screen: 'screen-lobby', lobby: 'initial' });
     };
-
     function pushHistoryState(screenId, lobbyState = null) { if (gameStarted) return; history.pushState({ screen: screenId, lobby: lobbyState }, '', ''); }
     function show(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
     function log(m){ document.getElementById('status-bar').innerText = m; }
@@ -481,7 +437,6 @@
     }
 
     function updateLobbyUI(){ document.getElementById('member-list').innerHTML=players.map(p=>"・"+p.name).join("<br>"); if(isHost){ document.getElementById('host-go-to-config').style.display = (players.length>=2) ? 'block' : 'none'; broadcast({type:'lobby', players}); updateVillagerCount(); } }
-    function showRoleConfig() { if(isOnline && isHost) broadcast({type:'show-config'}); pushHistoryState('screen-role-config'); restoreState({ screen: 'screen-role-config' }); }
 
     function handleData(d){
         if(d.type==='join' && isHost){ players.push({id:d.id, name:d.name}); updateLobbyUI(); }
@@ -559,7 +514,6 @@
         show('screen-confirm'); 
     }
     
-    // --- 村人バグ修正箇所 ---
     function showRole(){
         show('screen-reveal');
         document.getElementById('my-role-name').innerText = getRoleName(myRoleData.role);
@@ -586,14 +540,14 @@
                 } else if(myRoleData.role === '狂人') {
                     info.innerHTML = _('msg_help_ww');
                 } else { 
-                    info.innerHTML = _('msg_remember_role'); // 村人やその他はこれだけ
+                    info.innerHTML = _('msg_remember_role');
                 }
             } else {
                 if(myRoleData.role === "囚人") info.innerHTML = _('msg_your_shackle') + "<b class='color-囚人'>" + myRoleData.shackle + "</b>";
                 else if(myRoleData.role === "占い師") info.innerHTML = _('msg_seer_target') + "<b class='color-人狼'>" + wwTarget + "</b>";
                 else if(myRoleData.role === "人狼") info.innerHTML = _('msg_ww_target') + "<b class='color-人狼'>" + wwTarget + "</b>" + partnerText;
                 else if(myRoleData.role === "狂人") info.innerHTML = _('msg_help_ww');
-                else info.innerHTML = _('msg_stop_ww'); // 村人はこれだけ
+                else info.innerHTML = _('msg_stop_ww');
             }
         } else {
             if(myRoleData.role === "囚人") info.innerHTML = _('msg_your_shackle') + "<b class='color-囚人'>" + myRoleData.shackle + "</b>";
@@ -602,7 +556,7 @@
                 info.innerHTML = _('msg_select_target') + partnerText; 
                 document.getElementById('ww-choice').style.display = 'block'; document.getElementById('reveal-done-btn').style.display = 'none';
             } else {
-                info.innerHTML = _('msg_stop_ww'); // 村人はこれだけ
+                info.innerHTML = _('msg_stop_ww');
             }
         }
     }
@@ -736,8 +690,11 @@
         currentPhase = 'disc2'; show('screen-discussion2');
         let sp = players.find(p => p.id === silencedPlayerId);
         document.getElementById('silenced-msg-box').innerHTML = _('msg_silenced').replace('%s', sp ? sp.name : _('msg_nobody'));
-        timeLeft = 30; updateTimerDisp();
+        timeLeft = 120; updateTimerDisp(); // 2日目のタイマーを2分(120秒)に設定
         document.getElementById('force-vote-btn').style.display = (!isOnline || isHost) ? "block" : "none";
+        
+        document.getElementById('timer-display2').innerText = "02:00"; // 初期表示
+        
         if(isOnline && isHost) { startTimerLocal(); broadcast({type:'sync-time', time:timeLeft, active:true}); } 
         else if(!isOnline) { startTimerLocal(); }
     }
@@ -774,7 +731,7 @@
     function updateOnlineVoteStatus() { let c = Object.keys(votes).length; document.getElementById('vote-status-text').innerText = _('lbl_vote_status').replace('%c', c).replace('%t', players.length); if(c === players.length) { document.getElementById('opening-msg').style.display = 'block'; setTimeout(calcResult, 2000); } }
     
     function triggerOfflineVoteLoop() { triggerHandover(players[offlineVoteStep].name, prepareOfflineVote, _('btn_start_action')); }
-    function prepareOfflineVote() { let p = players[offlineVoteStep]; myRoleData = lastRoleMap[p.id]; document.getElementById('confirm-name').innerText = p.name + " さん"; document.getElementById('confirm-instruction').innerText = _('msg_show_vote'); document.getElementById('confirm-yes-btn').onclick = () => { triggerVoteScreen(); document.getElementById('vote-player-label').innerText = p.name; }; show('screen-confirm'); }
+    function prepareOfflineVote() { let p = players[offlineVoteStep]; myRoleData = lastRoleMap[p.id]; document.getElementById('confirm-name').innerText = p.name + " さん"; document.getElementById('confirm-instruction').innerText = _('msg_show_vote'); document.getElementById('confirm-yes-btn').onclick = () => { triggerVoteScreen(); document.getElementById('vote-player-label').innerText = p.name + " の投票"; }; show('screen-confirm'); }
 
     function calcResult(){ 
         let sA=0, sB=0, sS=true; 
